@@ -19,12 +19,13 @@
 import type { Point, AntRole } from "../types";
 import type { Ant } from "./ant";
 
-/** World-px from thorax-centre to the carried food position, per caste. */
+/** World-px from thorax-centre to the carried food position, per caste.
+ *  Kept short so the food sits at the mandibles without overlapping the HUD bars. */
 const CARRY_OFFSET: Record<AntRole, number> = {
-  queen: 28,
-  soldier: 24,
-  worker: 16,
-  drone: 16,
+  queen: 18,
+  soldier: 16,
+  worker: 12,
+  drone: 12,
 };
 
 export class Food {

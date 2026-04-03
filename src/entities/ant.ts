@@ -73,7 +73,7 @@ export class Ant extends Species {
   }
 
   get isAlive(): boolean {
-    return this.hp > 0;
+    return this.hp > 0 && this.state !== "dead";
   }
 
   setSpeechBubble(text: string, durationMs: number): void {

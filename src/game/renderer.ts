@@ -96,6 +96,11 @@ export function render(state: GameState, fights: FightManager): void {
 
   const dots: MinimapDot[] = [];
   if (flag) dots.push({ wx: flag.x, wy: flag.y, color: "#e63946" });
+  // Food items — small lime dots
+  for (const food of foods) {
+    if (!food.isCarried)
+      dots.push({ wx: food.pos.x, wy: food.pos.y, color: "#4ade80" });
+  }
   for (const ant of allAnts) {
     if (!ant.isAlive) continue;
     dots.push({

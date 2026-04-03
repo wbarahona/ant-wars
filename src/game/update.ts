@@ -10,6 +10,7 @@ import type { FightManager } from "./fightManager";
 import { showRespawnDialog } from "./respawnDialog";
 import { circlesOverlap } from "../collision";
 import { getContactRadius } from "../combat";
+import { FOOD_QUIPS_HUNGRY } from "../prefabs/playerAntPrefab";
 
 const SCROLL_SPEED = 600; // px/s
 const EDGE_ZONE = 40; // px from canvas edge to trigger edge scroll
@@ -51,10 +52,27 @@ export function update(
   for (const ant of state.allAnts) ant.update(dt);
 
   // ---- Food system --------------------------------------------------------
-  for (const food of state.foods) {
+  for (let i = state.foods.length - 1; i >= 0; i--) {
+    const food = state.foods[i];
+
     // Drop food if the carrier just died
     if (food.isCarried && food.carriedBy && !food.carriedBy.isAlive) {
       food.drop();
+    }
+
+    // Carrying player got hungry — auto-digest the food being held
+    if (
+      food.isCarried &&
+      food.carriedBy?.isPlayer &&
+      food.carriedBy.energy / food.carriedBy.maxEnergy <= 0.3
+    ) {
+      const ant = food.carriedBy;
+      ant.hp = ant.maxHp;
+      ant.energy = ant.maxEnergy;
+      const q = FOOD_QUIPS_HUNGRY;
+      ant.setSpeechBubble(q[Math.floor(Math.random() * q.length)], 2500);
+      state.foods.splice(i, 1);
+      continue;
     }
 
     // Update carried position each frame
@@ -74,6 +92,15 @@ export function update(
           food,
         )
       ) {
+        // Hungry player ant digests the food immediately
+        if (ant.isPlayer && ant.energy / ant.maxEnergy <= 0.3) {
+          ant.hp = ant.maxHp;
+          ant.energy = ant.maxEnergy;
+          const q = FOOD_QUIPS_HUNGRY;
+          ant.setSpeechBubble(q[Math.floor(Math.random() * q.length)], 2500);
+          state.foods.splice(i, 1);
+          break;
+        }
         food.pickup(ant);
         break;
       }
@@ -93,7 +120,7 @@ export function update(
     state.flag = null;
   }
 
-  // Detect player death — show respawn dialog exactly once
+  // Detect player death (combat OR starvation) — show respawn dialog once
   if (!state.playerAnt.isAlive && !state.pendingRespawn) {
     state.pendingRespawn = true;
     state.flag = null; // clear any pending march marker

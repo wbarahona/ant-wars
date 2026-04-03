@@ -123,29 +123,24 @@ export function resolveCombat(a: Ant, b: Ant): CombatResult {
   return { winner, loser, rawDamage, isCrit };
 }
 
-// ---- Ally replenishment -----------------------------------------------------
+/** Reserved for future use. Replenishment is handled by replenishAlly. */
+export function regurgitate(_a: Ant, _b: Ant): void {}
+
+// ---- Ally replenishment (energy) --------------------------------------------
 
 /**
- * Transfer HP from the healthier ally to the needier one.
- * The donor always keeps at least 30 % HP and transfers at most 8 HP.
- * Uses combatCooldown to throttle (0.5 s between transfers).
+ * When a friendly ally touches the player ant, fully restore the player's
+ * energy to max. The ally's stats are left untouched.
+ * Throttled by a 2 s cooldown to prevent instant re-use.
  */
 export function replenishAlly(a: Ant, b: Ant): void {
-  const ratioA = a.hp / a.maxHp;
-  const ratioB = b.hp / b.maxHp;
-  if (Math.abs(ratioA - ratioB) < 0.1) return; // already similar — skip
+  const player = a.isPlayer ? a : b.isPlayer ? b : null;
+  if (!player) return; // neither ant is the player — nothing to do
+  if (player.energy >= player.maxEnergy) return; // already full
+  if (player.combatCooldown > 0) return; // throttle
 
-  const [donor, recipient] = ratioA >= ratioB ? [a, b] : [b, a];
+  player.energy = player.maxEnergy;
 
-  const maxGive = Math.floor(donor.hp - donor.maxHp * 0.3);
-  const maxReceive = recipient.maxHp - recipient.hp;
-  const transfer = Math.min(8, maxGive, maxReceive);
-  if (transfer <= 0) return;
-
-  donor.hp -= transfer;
-  recipient.hp += transfer;
-
-  const REPLENISH_CD = 0.5;
-  donor.combatCooldown = REPLENISH_CD;
-  recipient.combatCooldown = REPLENISH_CD;
+  const REPLENISH_CD = 2.0;
+  player.combatCooldown = REPLENISH_CD;
 }

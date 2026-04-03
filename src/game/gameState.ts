@@ -64,11 +64,17 @@ export function createGameState(): GameState {
   // ---- Entities -----------------------------------------------------------
   const playerAnt = new Ant(
     "black",
-    "drone",
+    "worker",
     { x: worldWidth / 2, y: worldHeight / 2 },
     true,
   );
   playerAnt.rank = 0;
+
+  const fellowBlackWorker = new Ant("black", "worker", {
+    x: worldWidth / 2 - 40,
+    y: worldHeight / 2 - 40,
+  });
+  fellowBlackWorker.rank = 0;
 
   const testNpc = new Ant("red", "worker", {
     x: worldWidth / 2 + 60,
@@ -94,7 +100,14 @@ export function createGameState(): GameState {
   });
   yellowNpc.rank = 0;
 
-  const allAnts: Ant[] = [playerAnt, testNpc, buffedNpc, greenNpc, yellowNpc];
+  const allAnts: Ant[] = [
+    playerAnt,
+    fellowBlackWorker,
+    testNpc,
+    buffedNpc,
+    greenNpc,
+    yellowNpc,
+  ];
 
   // ---- Food items scattered around the spawn area ------------------------
   const foodSpawns: Point[] = [

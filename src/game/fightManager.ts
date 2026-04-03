@@ -10,7 +10,12 @@
  */
 
 import type { Ant } from "../entities/ant";
-import { areInContact, resolveCombat, replenishAlly } from "../combat";
+import {
+  areInContact,
+  resolveCombat,
+  replenishAlly,
+  regurgitate,
+} from "../combat";
 
 export type FightRecord = {
   startTime: number;
@@ -62,8 +67,10 @@ export class FightManager {
           if (a.combatCooldown <= 0 && b.combatCooldown <= 0)
             resolveCombat(a, b);
         } else {
-          if (a.combatCooldown <= 0 && b.combatCooldown <= 0)
+          if (a.combatCooldown <= 0 && b.combatCooldown <= 0) {
             replenishAlly(a, b);
+            regurgitate(a, b); // energy trophallaxis
+          }
         }
       }
     }

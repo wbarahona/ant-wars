@@ -63,6 +63,26 @@ const CHARGE_QUIPS_LEADER = [
   "CRUSH THEM! FOR THE COLONY!",
 ];
 
+export const FOOD_QUIPS_HUNGRY = [
+  "FINALLY! I'M STARVING!",
+  "FOOD! SWEET SUSTENANCE!",
+  "MMMM... GLUCOSE AT LAST!",
+  "I NEEDED THIS, BIG TIME!",
+  "SUGAR RUSH INCOMING!",
+  "ENERGY RESTORED! BACK IN ACTION!",
+];
+
+const FOOD_QUIPS_NORMAL = [
+  "PICKING THIS UP.",
+  "FOOD SECURED.",
+  "COLONY NEEDS THIS!",
+  "GRABBING SUPPLIES.",
+  "GOT IT. HEADING BACK.",
+  "RATIONS ACQUIRED!",
+  "THIS'LL COME IN HANDY.",
+  "SEEMS LIKE THIS FOOD NEEDS SOME FREEDOM!",
+];
+
 function pick(arr: string[]): string {
   return arr[Math.floor(Math.random() * arr.length)];
 }
@@ -80,6 +100,22 @@ export function orderMarch(
   ant.setSpeechBubble(
     pick(followerCount > 0 ? MOVE_QUIPS_LEADER : MOVE_QUIPS_SOLO),
     2000,
+  );
+}
+
+/**
+ * Orders the player ant to march toward a food item.
+ * Emits a hungry quip if energy is below 30 %, otherwise a normal carry quip.
+ */
+export function orderPickFood(
+  ant: Ant,
+  foodPos: { x: number; y: number },
+): void {
+  ant.target = { ...foodPos };
+  const isHungry = ant.energy / ant.maxEnergy <= 0.3;
+  ant.setSpeechBubble(
+    pick(isHungry ? FOOD_QUIPS_HUNGRY : FOOD_QUIPS_NORMAL),
+    2500,
   );
 }
 

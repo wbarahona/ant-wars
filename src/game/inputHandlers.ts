@@ -11,6 +11,7 @@ import type { FightManager } from "./fightManager";
 import {
   orderMarch,
   orderCharge,
+  orderPickFood,
   showPlayerContextMenu,
   hidePlayerContextMenu,
   type ContextMenuAction,
@@ -125,6 +126,36 @@ export function registerInputHandlers(
     if (clickedEnemy) {
       state.flag = null;
       orderCharge(state.playerAnt, clickedEnemy.pos, state.followerCount);
+      return;
+    }
+
+    // Check if a friendly ant was clicked — clear the flag, no order issued
+    const FRIEND_HIT_RADIUS = 20;
+    const clickedFriend = state.allAnts.find((a) => {
+      if (a === state.playerAnt || !a.isAlive) return false;
+      if (a.species !== state.playerAnt.species) return false;
+      const fx = a.pos.x - worldClickX;
+      const fy = a.pos.y - worldClickY;
+      return Math.sqrt(fx * fx + fy * fy) <= FRIEND_HIT_RADIUS;
+    });
+
+    if (clickedFriend) {
+      state.flag = null;
+      orderMarch(state.playerAnt, clickedFriend.pos, 0);
+      return;
+    }
+
+    // Check if a food item was clicked
+    const FOOD_HIT_RADIUS = 14;
+    const clickedFood = state.foods.find((food) => {
+      const fx = food.pos.x - worldClickX;
+      const fy = food.pos.y - worldClickY;
+      return Math.sqrt(fx * fx + fy * fy) <= FOOD_HIT_RADIUS && !food.isCarried;
+    });
+
+    if (clickedFood) {
+      state.flag = null;
+      orderPickFood(state.playerAnt, clickedFood.pos);
       return;
     }
 
