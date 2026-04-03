@@ -29,6 +29,7 @@
 import type { Ant } from "./entities/ant";
 import type { AntRole } from "./types";
 import { circlesOverlap } from "./collision";
+import { GRATITUDE_QUIPS } from "./prefabs/playerAntPrefab";
 
 // ---- Caste tier multipliers -------------------------------------------------
 // Queen > Soldier > Worker > Drone
@@ -139,7 +140,13 @@ export function replenishAlly(a: Ant, b: Ant): void {
   if (player.energy >= player.maxEnergy) return; // already full
   if (player.combatCooldown > 0) return; // throttle
 
+  const wasHungry = player.energy / player.maxEnergy <= 0.6;
   player.energy = player.maxEnergy;
+
+  if (wasHungry) {
+    const q = GRATITUDE_QUIPS;
+    player.setSpeechBubble(q[Math.floor(Math.random() * q.length)], 2500);
+  }
 
   const REPLENISH_CD = 2.0;
   player.combatCooldown = REPLENISH_CD;

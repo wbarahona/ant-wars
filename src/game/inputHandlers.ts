@@ -12,6 +12,7 @@ import {
   orderMarch,
   orderCharge,
   orderPickFood,
+  orderApproachFriend,
   showPlayerContextMenu,
   hidePlayerContextMenu,
   type ContextMenuAction,
@@ -141,7 +142,7 @@ export function registerInputHandlers(
 
     if (clickedFriend) {
       state.flag = null;
-      orderMarch(state.playerAnt, clickedFriend.pos, 0);
+      orderApproachFriend(state.playerAnt, clickedFriend.pos);
       return;
     }
 

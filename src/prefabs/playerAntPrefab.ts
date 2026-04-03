@@ -63,6 +63,24 @@ const CHARGE_QUIPS_LEADER = [
   "CRUSH THEM! FOR THE COLONY!",
 ];
 
+const FRIEND_QUIPS = [
+  "HEY SISTER! GOOD TO SEE YOU!",
+  "GLAD YOU'RE ON MY SIDE!",
+  "RALLYING UP WITH A NESTMATE!",
+  "WITH ME, SISTER — LET'S GO!",
+  "NICE, A FRIENDLY FACE!",
+  "FALL IN, FRIEND!",
+];
+
+export const GRATITUDE_QUIPS = [
+  "THANKS FOR THE BOOST, SISTER!",
+  "AHH! MUCH BETTER! THANKS!",
+  "YOU SAVED MY ANTENNAE!",
+  "ENERGY RESTORED! I OWE YOU ONE!",
+  "THAT'S WHAT NESTMATES ARE FOR!",
+  "FUELED UP! LET'S ROLL!",
+];
+
 export const FOOD_QUIPS_HUNGRY = [
   "FINALLY! I'M STARVING!",
   "FOOD! SWEET SUSTENANCE!",
@@ -101,6 +119,17 @@ export function orderMarch(
     pick(followerCount > 0 ? MOVE_QUIPS_LEADER : MOVE_QUIPS_SOLO),
     2000,
   );
+}
+
+/**
+ * Orders the player ant to approach a friendly ant with a social quip.
+ */
+export function orderApproachFriend(
+  ant: Ant,
+  friendPos: { x: number; y: number },
+): void {
+  ant.target = { ...friendPos };
+  ant.setSpeechBubble(pick(FRIEND_QUIPS), 2500);
 }
 
 /**
