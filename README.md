@@ -1,6 +1,6 @@
 # Ant Wars
 
-A top-down real-time action game rendered on an HTML5 `<canvas>`. You play as a single ant on a scrollable overworld, fight enemy ants from rival species, earn kills to climb the US Marines enlisted rank ladder, and try to survive.
+A top-down real-time action game rendered on an HTML5 `<canvas>`. You play as a single ant on a scrollable overworld, fight enemy ants from rival species, earn kills to climb the enlisted rank ladder, and try to survive.
 
 ---
 
@@ -28,15 +28,15 @@ npm run preview    # serve the production build locally
 
 ### Controls
 
-| Input | Action |
-|---|---|
-| **Left-click** terrain | Place a march flag — your ant walks there |
-| **Left-click** enemy ant | Charge and attack that enemy |
-| **Left-click** minimap | Jump the camera to that world position |
-| **Right-click** your ant | Open context menu (recruit squad, ask for food) |
-| **Arrow keys / WASD** | Scroll the camera |
-| **Mouse near canvas edge** | Edge-scroll the camera |
-| **Tab** or **☰ button** | Toggle the stats panel |
+| Input                      | Action                                          |
+| -------------------------- | ----------------------------------------------- |
+| **Left-click** terrain     | Place a march flag — your ant walks there       |
+| **Left-click** enemy ant   | Charge and attack that enemy                    |
+| **Left-click** minimap     | Jump the camera to that world position          |
+| **Right-click** your ant   | Open context menu (recruit squad, ask for food) |
+| **Arrow keys / WASD**      | Scroll the camera                               |
+| **Mouse near canvas edge** | Edge-scroll the camera                          |
+| **Tab** or **☰ button**   | Toggle the stats panel                          |
 
 ### Objective
 
@@ -55,21 +55,21 @@ Combat triggers automatically when your ant comes within contact range of an ene
 
 Each species has a natural prey it deals **1.5× damage** against:
 
-| Species | Beats | Color |
-|---|---|---|
-| Black (Army) | Yellow | Dark grey |
-| Yellow (Carpenter) | Red | Gold |
-| Red (Fire) | Green | Red |
-| Green (Leaf-cutter) | Black | Dark green |
+| Species             | Beats  | Color      |
+| ------------------- | ------ | ---------- |
+| Black (Army)        | Yellow | Dark grey  |
+| Yellow (Carpenter)  | Red    | Gold       |
+| Red (Fire)          | Green  | Red        |
+| Green (Leaf-cutter) | Black  | Dark green |
 
 ### Castes
 
-| Caste | Combat Multiplier | Notes |
-|---|---|---|
-| Queen | 2.0× | NPC only |
-| Soldier | 1.5× | Heavy hitter |
-| Worker | 1.0× | Balanced |
-| Drone | 0.7× | Fast but fragile |
+| Caste   | Combat Multiplier | Notes            |
+| ------- | ----------------- | ---------------- |
+| Queen   | 2.0×              | NPC only         |
+| Soldier | 1.5×              | Heavy hitter     |
+| Worker  | 1.0×              | Balanced         |
+| Drone   | 0.7×              | Fast but fragile |
 
 ### Energy
 
@@ -79,15 +79,15 @@ Moving drains energy. If your ant's energy hits **0** it dies. When energy drops
 
 Every kill adds a Battle Win. Reach the following thresholds to rank up (each rank grants **+5 attack / +4 defense / +20 max HP**):
 
-| Rank | Grade | Wins Required |
-|---|---|---|
-| Private | E-1 | — |
-| Private First Class | E-2 | 1 |
-| Lance Corporal | E-3 | 3 |
-| Corporal | E-4 | 6 |
-| Sergeant | E-5 | 12 |
-| Staff Sergeant | E-6 | 25 |
-| Gunnery Sergeant | E-7 | 50 |
+| Rank                | Grade | Wins Required |
+| ------------------- | ----- | ------------- |
+| Private             | E-1   | —             |
+| Private First Class | E-2   | 1             |
+| Lance Corporal      | E-3   | 3             |
+| Corporal            | E-4   | 6             |
+| Sergeant            | E-5   | 12            |
+| Staff Sergeant      | E-6   | 25            |
+| Gunnery Sergeant    | E-7   | 50            |
 
 ### Death & Respawn
 
