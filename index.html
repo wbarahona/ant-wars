@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ant Wars</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: #111;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      #viewport {
+        position: fixed;
+        inset: 0;
+      }
+
+      canvas {
+        display: block;
+        cursor: crosshair;
+      }
+
+      /* ---- Burger button ------------------------------------------------- */
+      #hud-toggle {
+        position: fixed;
+        top: 12px;
+        right: 12px;
+        z-index: 200;
+        background: rgba(15, 15, 30, 0.82);
+        border: 1px solid #2a2a4a;
+        border-radius: 6px;
+        color: #f4d03f;
+        cursor: pointer;
+        padding: 6px 9px;
+        font-size: 18px;
+        line-height: 1;
+        user-select: none;
+        transition: background 0.15s;
+      }
+      #hud-toggle:hover {
+        background: rgba(42, 42, 90, 0.95);
+      }
+
+      /* ---- Stats panel (overlay, slides in from right) ------------------- */
+      #stats-panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 220px;
+        background: rgba(20, 20, 46, 0.96);
+        color: #d0d0d0;
+        font-family: "Courier New", monospace;
+        font-size: 12px;
+        border-left: 2px solid #2a2a4a;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        z-index: 100;
+        transform: translateX(100%);
+        transition: transform 0.22s ease;
+        /* push content below the burger button */
+        padding-top: 50px;
+      }
+      #stats-panel.open {
+        transform: translateX(0);
+      }
+
+      .panel-header {
+        background: #0f0f1e;
+        color: #f4d03f;
+        font-size: 14px;
+        font-weight: bold;
+        letter-spacing: 2px;
+        text-align: center;
+        padding: 12px 8px;
+        border-bottom: 2px solid #2a2a4a;
+      }
+
+      .stat-section {
+        padding: 10px 12px;
+        border-bottom: 1px solid #2a2a4a;
+      }
+
+      .stat-section h3 {
+        font-size: 10px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #7a7aaa;
+        margin-bottom: 6px;
+      }
+
+      .stat-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 2px 0;
+      }
+
+      .stat-row span:first-child {
+        color: #8888aa;
+      }
+
+      .stat-row span:last-child {
+        color: #e0e0ff;
+        font-weight: bold;
+      }
+
+      .stat-row span:last-child.positive {
+        color: #22c55e;
+      }
+
+      /* ---- Bars --------------------------------------------------------- */
+      .bar-track {
+        height: 5px;
+        background: #222236;
+        border-radius: 2px;
+        margin: 2px 0 6px;
+        overflow: hidden;
+      }
+
+      .bar-fill {
+        height: 100%;
+        border-radius: 2px;
+        transition:
+          width 0.12s linear,
+          background-color 0.3s;
+      }
+
+      /* ---- Portrait placeholder ----------------------------------------- */
+      #ant-portrait {
+        width: 100%;
+        height: 80px;
+        background: #111122;
+        border: 1px dashed #3a3a6a;
+        border-radius: 4px;
+        margin-bottom: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        position: relative;
+      }
+
+      #ant-portrait-placeholder {
+        font-size: 22px;
+        opacity: 0.2;
+        user-select: none;
+        line-height: 1;
+      }
+
+      #ant-portrait-label {
+        font-size: 9px;
+        letter-spacing: 1px;
+        color: #5a5a8a;
+        text-transform: uppercase;
+      }
+
+      /* ---- State badge -------------------------------------------------- */
+      .state-badge {
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 10px;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="viewport">
+      <canvas id="game-canvas"></canvas>
+    </div>
+
+    <button id="hud-toggle" title="Toggle stats (Tab)">&#9776;</button>
+
+    <div id="stats-panel">
+      <div class="panel-header">ANT WARS</div>
+
+      <div class="stat-section">
+        <h3>Player Ant</h3>
+
+        <!-- Portrait placeholder — future: render sprite here -->
+        <div id="ant-portrait">
+          <div id="ant-portrait-placeholder">&#128027;</div>
+          <div id="ant-portrait-label">BLACK · PRIVATE</div>
+        </div>
+
+        <div class="stat-row">
+          <span>State</span
+          ><span id="stat-ant-state" class="state-badge">idle</span>
+        </div>
+
+        <div class="stat-row" style="margin-bottom: 1px">
+          <span>HP</span><span id="stat-ant-hp">120 / 120</span>
+        </div>
+        <div class="bar-track">
+          <div
+            id="stat-ant-hp-bar"
+            class="bar-fill"
+            style="width: 100%; background: #22c55e"
+          ></div>
+        </div>
+
+        <div class="stat-row" style="margin-bottom: 1px">
+          <span>Energy</span><span id="stat-ant-energy">100 / 100</span>
+        </div>
+        <div class="bar-track">
+          <div
+            id="stat-ant-energy-bar"
+            class="bar-fill"
+            style="width: 100%; background: #22c55e"
+          ></div>
+        </div>
+
+        <div class="stat-row">
+          <span>Rank</span>
+          <span
+            id="stat-ant-rank-wrap"
+            style="display: flex; align-items: center; gap: 5px"
+          >
+            <canvas
+              id="rank-insignia-canvas"
+              width="20"
+              height="28"
+              style="image-rendering: pixelated; vertical-align: middle"
+            ></canvas>
+            <span id="stat-ant-rank" style="font-size: 10px; color: #e0e0ff"
+              >E-1 Private</span
+            >
+          </span>
+        </div>
+        <div class="stat-row">
+          <span>Wins</span><span id="stat-ant-wins">0</span>
+        </div>
+        <div class="stat-row">
+          <span>Attack</span><span id="stat-ant-attack">20</span>
+        </div>
+        <div class="stat-row">
+          <span>Defense</span><span id="stat-ant-defense">10</span>
+        </div>
+      </div>
+
+      <div class="stat-section">
+        <h3>Colony</h3>
+        <div class="stat-row">
+          <span>Name</span><span id="stat-name">—</span>
+        </div>
+        <div class="stat-row">
+          <span>Species</span><span id="stat-species">—</span>
+        </div>
+      </div>
+
+      <div class="stat-section">
+        <h3>Population</h3>
+        <div class="stat-row">
+          <span>Total</span><span id="stat-population">0</span>
+        </div>
+        <div class="stat-row">
+          <span>Workers</span><span id="stat-workers">0</span>
+        </div>
+        <div class="stat-row">
+          <span>Soldiers</span><span id="stat-soldiers">0</span>
+        </div>
+        <div class="stat-row">
+          <span>Drones</span><span id="stat-drones">0</span>
+        </div>
+      </div>
+
+      <div class="stat-section">
+        <h3>Resources</h3>
+        <div class="stat-row">
+          <span>Food</span><span id="stat-food">0</span>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
