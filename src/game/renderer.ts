@@ -40,6 +40,10 @@ export function render(state: GameState, fights: FightManager): void {
   drawOverworld(ctx, worldWidth, worldHeight);
   if (flag) drawFlag(ctx, flag);
 
+  // Pheromone trails — below food and ants
+  state.pheromoneLayer.draw(ctx, "food", state.showFoodTrail);
+  state.pheromoneLayer.draw(ctx, "attack", state.showAttackTrail);
+
   // Ground food (drawn below ants)
   for (const food of foods) {
     if (!food.isCarried) drawFood(ctx, food);
@@ -111,6 +115,30 @@ export function render(state: GameState, fights: FightManager): void {
   }
   mm.dots = dots;
   drawMinimap(ctx, mm);
+
+  // Pheromone minimap overlay (drawn on top of minimap)
+  state.pheromoneLayer.drawMinimap(
+    ctx,
+    "food",
+    state.showFoodTrail,
+    mm.x,
+    mm.y,
+    mm.width,
+    mm.height,
+    worldWidth,
+    worldHeight,
+  );
+  state.pheromoneLayer.drawMinimap(
+    ctx,
+    "attack",
+    state.showAttackTrail,
+    mm.x,
+    mm.y,
+    mm.width,
+    mm.height,
+    worldWidth,
+    worldHeight,
+  );
 
   // ---- HUD: right-side stats panel ----------------------------------------
   updatePlayerStats(playerAnt);

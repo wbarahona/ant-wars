@@ -34,6 +34,20 @@ export function registerInputHandlers(
 
   hudToggle?.addEventListener("click", toggleStats);
 
+  // ---- Trail visibility checkboxes ----------------------------------------
+  const cbFoodTrail = document.getElementById(
+    "cb-food-trail",
+  ) as HTMLInputElement | null;
+  const cbAttackTrail = document.getElementById(
+    "cb-attack-trail",
+  ) as HTMLInputElement | null;
+  cbFoodTrail?.addEventListener("change", () => {
+    state.showFoodTrail = cbFoodTrail.checked;
+  });
+  cbAttackTrail?.addEventListener("change", () => {
+    state.showAttackTrail = cbAttackTrail.checked;
+  });
+
   // ---- Window resize: recalculate canvas + camera -------------------------
   let resizeTimer = 0;
   window.addEventListener("resize", () => {

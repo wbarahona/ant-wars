@@ -30,6 +30,7 @@ import type { Ant } from "./entities/ant";
 import type { AntRole } from "./types";
 import { circlesOverlap } from "./collision";
 import { GRATITUDE_QUIPS } from "./prefabs/playerAntPrefab";
+import { DEPOSIT_INTERVAL } from "./world/pheromoneLayer";
 
 // ---- Caste tier multipliers -------------------------------------------------
 // Queen > Soldier > Worker > Drone
@@ -120,6 +121,15 @@ export function resolveCombat(a: Ant, b: Ant): CombatResult {
   const COMBAT_CD = 1.0;
   winner.combatCooldown = COMBAT_CD;
   loser.combatCooldown = COMBAT_CD;
+
+  // Force a pheromone deposit on the next frame (ants may not be moving)
+  winner.depositAccumulator = DEPOSIT_INTERVAL;
+  if (loser.isAlive) loser.depositAccumulator = DEPOSIT_INTERVAL;
+
+  // Keep attack trail emitting for 8 s of walking after the fight
+  const POST_COMBAT_TRAIL = 8.0;
+  winner.postCombatTrailTime = POST_COMBAT_TRAIL;
+  if (loser.isAlive) loser.postCombatTrailTime = POST_COMBAT_TRAIL;
 
   return { winner, loser, rawDamage, isCrit };
 }

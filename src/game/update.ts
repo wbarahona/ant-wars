@@ -11,6 +11,7 @@ import { showRespawnDialog } from "./respawnDialog";
 import { circlesOverlap } from "../collision";
 import { getContactRadius } from "../combat";
 import { FOOD_QUIPS_HUNGRY } from "../prefabs/playerAntPrefab";
+import { DEPOSIT_INTERVAL } from "../world/pheromoneLayer";
 
 const SCROLL_SPEED = 600; // px/s
 const EDGE_ZONE = 40; // px from canvas edge to trigger edge scroll
@@ -50,6 +51,30 @@ export function update(
   state.gameTime += dt;
 
   for (const ant of state.allAnts) ant.update(dt);
+
+  // ---- Pheromone trail deposits -------------------------------------------
+  state.pheromoneLayer.update(dt);
+  const foodCarriers = new Set(
+    state.foods
+      .filter((f) => f.isCarried && f.carriedBy)
+      .map((f) => f.carriedBy!),
+  );
+  for (const ant of state.allAnts) {
+    if (!ant.isAlive) continue;
+    if (ant.depositAccumulator < DEPOSIT_INTERVAL) continue;
+    ant.depositAccumulator -= DEPOSIT_INTERVAL;
+    const isCarrying = foodCarriers.has(ant);
+    const isFighting = ant.state === "attacking" || ant.postCombatTrailTime > 0;
+
+    // Priority: combat overrides food; food overrides the manual trail flags
+    if (isFighting || ant.leaveAttackTrail) {
+      // In combat → always attack trail (even if carrying food)
+      state.pheromoneLayer.deposit(ant.pos, "attack", ant.species);
+    } else if (isCarrying || ant.leaveFoodTrail) {
+      // Carrying food (and not fighting) → food trail
+      state.pheromoneLayer.deposit(ant.pos, "food", ant.species);
+    }
+  }
 
   // ---- Food system --------------------------------------------------------
   for (let i = state.foods.length - 1; i >= 0; i--) {

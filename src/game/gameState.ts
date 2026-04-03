@@ -11,6 +11,7 @@ import { Camera } from "../world/camera";
 import { InputHandler } from "../input";
 import { Ant } from "../entities/ant";
 import { Food } from "../entities/food";
+import { PheromoneLayer } from "../world/pheromoneLayer";
 
 export interface GameState {
   // Render targets
@@ -40,6 +41,11 @@ export interface GameState {
   // Respawn flow
   /** True from the moment the player dies until the new ant is spawned. */
   pendingRespawn: boolean;
+
+  // Pheromone trail system
+  pheromoneLayer: PheromoneLayer;
+  showFoodTrail: boolean;
+  showAttackTrail: boolean;
 }
 
 export function createGameState(): GameState {
@@ -64,7 +70,7 @@ export function createGameState(): GameState {
   // ---- Entities -----------------------------------------------------------
   const playerAnt = new Ant(
     "black",
-    "worker",
+    "soldier",
     { x: worldWidth / 2, y: worldHeight / 2 },
     true,
   );
@@ -140,6 +146,9 @@ export function createGameState(): GameState {
     allAnts,
     foods,
     pendingRespawn: false,
+    pheromoneLayer: new PheromoneLayer(),
+    showFoodTrail: true,
+    showAttackTrail: true,
   };
 }
 

@@ -170,7 +170,9 @@ export type ContextMenuAction =
   | "recruit5"
   | "recruit10"
   | "release"
-  | "askFood";
+  | "askFood"
+  | "trailFood"
+  | "trailAttack";
 
 const MENU_QUIPS: Record<ContextMenuAction, string[]> = {
   recruit5: [
@@ -205,7 +207,46 @@ const MENU_QUIPS: Record<ContextMenuAction, string[]> = {
     "A LITTLE SUGAR... PLEASE?",
     "HUNGRY OVER HERE!",
   ],
+  // Trail quips are handled inline via the toggle section — these are unused
+  trailFood: [],
+  trailAttack: [],
 };
+
+const TRAIL_FOOD_ON_QUIPS = [
+  "MARKING FOOD TRAIL!",
+  "PHEROMONE BREADCRUMBS — GO!",
+  "FOOD THIS WAY, SISTERS!",
+  "BLAZING A FOOD PATH!",
+  "TRAIL ACTIVE — FOLLOW THE GREEN!",
+  "LAYING DOWN FOOD SCENT!",
+];
+
+const TRAIL_FOOD_OFF_QUIPS = [
+  "FOOD TRAIL CLEARED.",
+  "GOING SCENTLESS.",
+  "TRAIL DEACTIVATED.",
+  "NO MORE BREADCRUMBS.",
+  "SCENT TRAIL OFF.",
+  "CLEANED UP THE MARKING.",
+];
+
+const TRAIL_ATTACK_ON_QUIPS = [
+  "ATTACK VECTOR MARKED!",
+  "PAINTING THE TARGET ROUTE!",
+  "FOLLOW THE RED, SISTERS!",
+  "ATTACK TRAIL ACTIVE!",
+  "ENEMIES AHEAD — TRAIL SET!",
+  "HOSTILE TERRITORY MARKED!",
+];
+
+const TRAIL_ATTACK_OFF_QUIPS = [
+  "ATTACK TRAIL CLEARED.",
+  "STANDING DOWN THE MARKING.",
+  "TRAIL OFF.",
+  "HOSTILE MARKING REMOVED.",
+  "GOING DARK ON ATTACK TRAIL.",
+  "ATTACK SCENT DEACTIVATED.",
+];
 
 let activeMenu: HTMLDivElement | null = null;
 
@@ -280,6 +321,72 @@ export function showPlayerContextMenu(
       hidePlayerContextMenu();
     });
     menu.appendChild(btn);
+  }
+
+  // ---- Separator -----------------------------------------------------------
+  const sep = document.createElement("div");
+  Object.assign(sep.style, { borderTop: "1px solid #2a2a4a", margin: "4px 0" });
+  menu.appendChild(sep);
+
+  // ---- Pheromone trail toggles --------------------------------------------
+  const trailDefs: {
+    getActive: () => boolean;
+    toggle: () => void;
+    onQuips: string[];
+    offQuips: string[];
+    action: ContextMenuAction;
+    label: string;
+  }[] = [
+    {
+      getActive: () => ant.leaveFoodTrail,
+      toggle: () => {
+        ant.leaveFoodTrail = !ant.leaveFoodTrail;
+      },
+      onQuips: TRAIL_FOOD_ON_QUIPS,
+      offQuips: TRAIL_FOOD_OFF_QUIPS,
+      action: "trailFood",
+      label: "Food trail",
+    },
+    {
+      getActive: () => ant.leaveAttackTrail,
+      toggle: () => {
+        ant.leaveAttackTrail = !ant.leaveAttackTrail;
+      },
+      onQuips: TRAIL_ATTACK_ON_QUIPS,
+      offQuips: TRAIL_ATTACK_OFF_QUIPS,
+      action: "trailAttack",
+      label: "Attack trail",
+    },
+  ];
+
+  for (const td of trailDefs) {
+    const isOn = td.getActive();
+    const trailBtn = document.createElement("div");
+    trailBtn.textContent = (isOn ? "\u2714  " : "\u25cb  ") + td.label;
+    Object.assign(trailBtn.style, {
+      padding: "6px 14px",
+      color: isOn ? "#4ade80" : "#d0d0d0",
+      cursor: "pointer",
+      letterSpacing: "0.5px",
+      transition: "background 0.1s",
+    });
+    trailBtn.addEventListener("mouseenter", () => {
+      trailBtn.style.background = "#1f1f3a";
+      trailBtn.style.color = "#f4d03f";
+    });
+    trailBtn.addEventListener("mouseleave", () => {
+      trailBtn.style.background = "transparent";
+      trailBtn.style.color = td.getActive() ? "#4ade80" : "#d0d0d0";
+    });
+    trailBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      td.toggle();
+      const nowOn = td.getActive();
+      ant.setSpeechBubble(pick(nowOn ? td.onQuips : td.offQuips), 3000);
+      onAction(td.action);
+      hidePlayerContextMenu();
+    });
+    menu.appendChild(trailBtn);
   }
 
   // Clamp to viewport so it never goes off-screen

@@ -44,6 +44,16 @@ export class Ant extends Species {
   // Combat / replenishment cooldown (seconds) — prevents per-frame resolution
   combatCooldown = 0;
 
+  // Pheromone trail flags (player only — toggled via context menu)
+  leaveFoodTrail = false;
+  leaveAttackTrail = false;
+
+  // Accumulates world-px traveled since last pheromone deposit
+  depositAccumulator = 0;
+
+  // Seconds remaining to emit attack trail after a fight (counts down after combat)
+  postCombatTrailTime = 0;
+
   // Transient speech bubble — set via setSpeechBubble(), expires automatically
   speechBubbleText: string | null = null;
   private speechBubbleExpiry = 0;
@@ -94,6 +104,10 @@ export class Ant extends Species {
     if (this.combatCooldown > 0)
       this.combatCooldown = Math.max(0, this.combatCooldown - dt);
 
+    // Tick post-combat trail timer
+    if (this.postCombatTrailTime > 0)
+      this.postCombatTrailTime = Math.max(0, this.postCombatTrailTime - dt);
+
     if (this.state === "dead") return;
 
     // NPC energy regenerates while idle (resting after exhaustion)
@@ -136,6 +150,7 @@ export class Ant extends Species {
 
     // All ants drain energy while moving
     this.energy = Math.max(0, this.energy - step * 0.04);
+    this.depositAccumulator += step;
 
     // NPC exhausted: rest until energy recovers (player death handled above)
     if (!this.isPlayer && this.energy <= 0) {
