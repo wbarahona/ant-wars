@@ -1,4 +1,4 @@
-import type { Ant } from "./ant";
+import type { Ant } from "../entities/ant";
 import type { AntRole } from "../types";
 
 // ---- Pixel legend -----------------------------------------------------------

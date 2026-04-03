@@ -12,7 +12,7 @@
  *  - Energy = 0 should slow the ant (speed penalty) before it fully stops
  */
 
-import type { Ant } from "./ant";
+import type { Ant } from "../entities/ant";
 import type { RankLevel } from "../types";
 import { RANKS } from "../types";
 import { drawAnt } from "./antPrefab";

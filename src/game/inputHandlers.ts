@@ -14,7 +14,7 @@ import {
   showPlayerContextMenu,
   hidePlayerContextMenu,
   type ContextMenuAction,
-} from "../entities/playerAntPrefab";
+} from "../prefabs/playerAntPrefab";
 
 export function registerInputHandlers(
   state: GameState,

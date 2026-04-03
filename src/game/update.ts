@@ -8,6 +8,8 @@ import type { GameState } from "./gameState";
 import { respawnPlayer } from "./gameState";
 import type { FightManager } from "./fightManager";
 import { showRespawnDialog } from "./respawnDialog";
+import { circlesOverlap } from "../collision";
+import { getContactRadius } from "../combat";
 
 const SCROLL_SPEED = 600; // px/s
 const EDGE_ZONE = 40; // px from canvas edge to trigger edge scroll
@@ -47,6 +49,36 @@ export function update(
   state.gameTime += dt;
 
   for (const ant of state.allAnts) ant.update(dt);
+
+  // ---- Food system --------------------------------------------------------
+  for (const food of state.foods) {
+    // Drop food if the carrier just died
+    if (food.isCarried && food.carriedBy && !food.carriedBy.isAlive) {
+      food.drop();
+    }
+
+    // Update carried position each frame
+    if (food.isCarried) {
+      food.updateCarriedPosition();
+      continue;
+    }
+
+    // Ground food — test against every alive ant not already carrying something
+    for (const ant of state.allAnts) {
+      if (!ant.isAlive) continue;
+      // One food per ant: skip if already carrying
+      if (state.foods.some((f) => f.carriedBy === ant)) continue;
+      if (
+        circlesOverlap(
+          { pos: ant.pos, collisionRadius: getContactRadius(ant) },
+          food,
+        )
+      ) {
+        food.pickup(ant);
+        break;
+      }
+    }
+  }
 
   fights.update(state.allAnts, state.gameTime);
 

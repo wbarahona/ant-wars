@@ -10,6 +10,7 @@ import type { AntRole } from "../types";
 import { Camera } from "../world/camera";
 import { InputHandler } from "../input";
 import { Ant } from "../entities/ant";
+import { Food } from "../entities/food";
 
 export interface GameState {
   // Render targets
@@ -34,6 +35,7 @@ export interface GameState {
   // Entities
   playerAnt: Ant;
   allAnts: Ant[];
+  foods: Food[];
 
   // Respawn flow
   /** True from the moment the player dies until the new ant is spawned. */
@@ -94,6 +96,19 @@ export function createGameState(): GameState {
 
   const allAnts: Ant[] = [playerAnt, testNpc, buffedNpc, greenNpc, yellowNpc];
 
+  // ---- Food items scattered around the spawn area ------------------------
+  const foodSpawns: Point[] = [
+    { x: worldWidth / 2 - 180, y: worldHeight / 2 - 140 },
+    { x: worldWidth / 2 + 200, y: worldHeight / 2 - 180 },
+    { x: worldWidth / 2 - 90, y: worldHeight / 2 + 190 },
+    { x: worldWidth / 2 + 260, y: worldHeight / 2 + 110 },
+    { x: worldWidth / 2 - 310, y: worldHeight / 2 + 40 },
+    { x: worldWidth / 2 + 60, y: worldHeight / 2 - 290 },
+    { x: worldWidth / 2 - 60, y: worldHeight / 2 + 340 },
+    { x: worldWidth / 2 + 340, y: worldHeight / 2 - 60 },
+  ];
+  const foods = foodSpawns.map((pos) => new Food(pos));
+
   camera.centerOn(playerAnt.pos.x, playerAnt.pos.y);
 
   return {
@@ -110,6 +125,7 @@ export function createGameState(): GameState {
     gameTime: 0,
     playerAnt,
     allAnts,
+    foods,
     pendingRespawn: false,
   };
 }

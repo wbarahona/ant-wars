@@ -28,6 +28,7 @@
 
 import type { Ant } from "./entities/ant";
 import type { AntRole } from "./types";
+import { circlesOverlap } from "./collision";
 
 // ---- Caste tier multipliers -------------------------------------------------
 // Queen > Soldier > Worker > Drone
@@ -54,10 +55,10 @@ export function getContactRadius(ant: Ant): number {
 
 export function areInContact(a: Ant, b: Ant): boolean {
   if (!a.isAlive || !b.isAlive) return false;
-  const dx = a.pos.x - b.pos.x;
-  const dy = a.pos.y - b.pos.y;
-  const threshold = getContactRadius(a) + getContactRadius(b);
-  return dx * dx + dy * dy <= threshold * threshold;
+  return circlesOverlap(
+    { pos: a.pos, collisionRadius: getContactRadius(a) },
+    { pos: b.pos, collisionRadius: getContactRadius(b) },
+  );
 }
 
 // ---- Combat resolution ------------------------------------------------------

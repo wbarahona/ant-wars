@@ -1,6 +1,6 @@
 import type { Ant } from "../entities/ant";
 import { RANKS } from "../types";
-import { drawRankInsignia } from "../entities/playerAntPrefab";
+import { drawRankInsignia } from "../prefabs/playerAntPrefab";
 
 // Cached reference to the rank insignia canvas (looked up once)
 let rankCanvas: HTMLCanvasElement | null = null;

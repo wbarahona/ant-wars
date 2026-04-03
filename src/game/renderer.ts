@@ -9,10 +9,11 @@ import type { FightManager } from "./fightManager";
 import type { MinimapDot } from "../ui/minimap";
 import { drawOverworld, drawFlag } from "../world/overworld";
 import { drawMinimap, defaultMinimapConfig } from "../ui/minimap";
-import { drawPlayerAnt } from "../entities/playerAntPrefab";
-import { drawAnt } from "../entities/antPrefab";
+import { drawPlayerAnt } from "../prefabs/playerAntPrefab";
+import { drawAnt } from "../prefabs/antPrefab";
 import { updatePlayerStats } from "../ui/statsPanel";
 import { drawFightCloud, drawFightResolution } from "../gfx/fightCloud";
+import { drawFood } from "../prefabs/foodPrefab";
 
 export function render(state: GameState, fights: FightManager): void {
   const {
@@ -25,6 +26,7 @@ export function render(state: GameState, fights: FightManager): void {
     flag,
     playerAnt,
     allAnts,
+    foods,
     gameTime,
   } = state;
 
@@ -38,10 +40,20 @@ export function render(state: GameState, fights: FightManager): void {
   drawOverworld(ctx, worldWidth, worldHeight);
   if (flag) drawFlag(ctx, flag);
 
+  // Ground food (drawn below ants)
+  for (const food of foods) {
+    if (!food.isCarried) drawFood(ctx, food);
+  }
+
   for (const ant of allAnts) {
     if (!ant.isPlayer) drawAnt(ctx, ant);
   }
   drawPlayerAnt(ctx, playerAnt);
+
+  // Carried food (drawn above ants — shows as held in mandibles)
+  for (const food of foods) {
+    if (food.isCarried) drawFood(ctx, food);
+  }
 
   // Fight cloud (0–1.2 s) then resolution splash (1.2–2.8 s)
   for (const [, rec] of fights.records) {
