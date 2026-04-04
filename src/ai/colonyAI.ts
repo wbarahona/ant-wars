@@ -16,20 +16,40 @@ import type { AntRole } from "../types";
 /** Food pieces consumed per spawned ant. */
 const SPAWN_COST = 1;
 
+// ── Colony game phase ─────────────────────────────────────────────────────────
 /**
- * How often (seconds) each nest attempts a spawn.
- * Roughly one new ant every 8 s once food income is healthy.
+ * Three-phase colony lifecycle that drives spawn priorities and timing.
+ *
+ *  early  (pop  <  12) – food income is critical; flood with workers.
+ *  mid    (pop 12–34) – income is stable; grow exponentially across all castes.
+ *  late   (pop >= 35) – war footing; mass-produce soldiers to assault the enemy.
  */
-const SPAWN_INTERVAL = 8;
+export type ColonyPhase = "early" | "mid" | "late";
+
+const EARLY_POP_CAP = 12;
+const LATE_POP_FLOOR = 35;
+
+export function getColonyPhase(nest: Nest): ColonyPhase {
+  if (nest.population < EARLY_POP_CAP) return "early";
+  if (nest.population < LATE_POP_FLOOR) return "mid";
+  return "late";
+}
+
+/** Caste target fractions per phase (queens excluded from auto-spawn). */
+const PHASE_TARGETS: Record<ColonyPhase, Partial<Record<AntRole, number>>> = {
+  early: { worker: 0.8, soldier: 0.15, drone: 0.05 },
+  mid: { worker: 0.55, soldier: 0.3, drone: 0.15 },
+  late: { worker: 0.35, soldier: 0.55, drone: 0.1 },
+};
 
 /**
- * Target population fractions for spawnable castes.
- * Queens are excluded — the player controls the black queen; red gets none.
+ * Seconds between spawn attempts per phase.
+ * Mid/late colonies have healthier food income and can afford tighter cycles.
  */
-const TARGET: Partial<Record<AntRole, number>> = {
-  worker: 0.6,
-  soldier: 0.25,
-  drone: 0.15,
+const PHASE_INTERVAL: Record<ColonyPhase, number> = {
+  early: 10,
+  mid: 6,
+  late: 5,
 };
 
 /** Map each spawnable role to the matching Nest counter field. */
@@ -48,10 +68,12 @@ const SPAWN_ROLES: AntRole[] = ["worker", "soldier", "drone"];
  * actual fraction falls furthest below its target.
  */
 function pickCaste(nest: Nest): AntRole {
-  const pop = Math.max(nest.population, 1);
-
   // Bootstrap: fill workers until colony has a bare minimum
   if (nest.population < 4) return "worker";
+
+  const phase = getColonyPhase(nest);
+  const targets = PHASE_TARGETS[phase];
+  const pop = Math.max(nest.population, 1);
 
   let bestRole: AntRole = "worker";
   let bestDeficit = -Infinity;
@@ -59,7 +81,7 @@ function pickCaste(nest: Nest): AntRole {
   for (const role of SPAWN_ROLES) {
     const field = ROLE_FIELD[role]!;
     const current = (nest[field] as number) / pop;
-    const deficit = (TARGET[role] ?? 0) - current;
+    const deficit = (targets[role] ?? 0) - current;
     if (deficit > bestDeficit) {
       bestDeficit = deficit;
       bestRole = role;
@@ -87,8 +109,8 @@ export function tickColonyAI(nests: Nest[], allAnts: Ant[], dt: number): void {
     nest.spawnTimer -= dt;
     if (nest.spawnTimer > 0) continue;
 
-    // Reset cooldown first (even if we can't afford a spawn this cycle)
-    nest.spawnTimer = SPAWN_INTERVAL;
+    // Reset cooldown (phase-dependent; faster in mid/late once food income is healthy)
+    nest.spawnTimer = PHASE_INTERVAL[getColonyPhase(nest)];
 
     if (nest.foodStored < SPAWN_COST) continue;
 

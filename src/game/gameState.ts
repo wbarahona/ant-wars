@@ -104,7 +104,7 @@ export function createGameState(): GameState {
       y: redNest.pos.y + (Math.random() - 0.5) * 60,
     }),
   );
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 1; i++) {
     allAnts.push(
       new Ant("red", "worker", {
         x: redNest.pos.x + (Math.random() - 0.5) * 60,

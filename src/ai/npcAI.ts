@@ -24,6 +24,7 @@ import type { Food } from "../entities/food";
 import type { Nest } from "../entities/nest";
 import type { PheromoneLayer } from "../world/pheromoneLayer";
 import type { Point } from "../types";
+import { getColonyPhase } from "./colonyAI";
 
 // ── Tuning constants ──────────────────────────────────────────────────────────
 
@@ -57,6 +58,12 @@ const WORKER_FOOD_BIAS = 0.95;
 
 /** 0–1 probability that any ant follows a food trail as a fallback. */
 const GENERAL_FOOD_TRAIL_BIAS = 0.45;
+
+/** World-px radius within which drones patrol around their home nest. */
+const DRONE_LINGER_RADIUS = 160;
+
+/** Late-game probability that soldiers march directly on the enemy nest. */
+const LATE_ENEMY_NEST_BIAS = 0.75;
 
 /**
  * Half-angle of the directional cone used when an ant roams without a target.
@@ -181,11 +188,36 @@ function decideTarget(
     const homeNest = nests.find((n) => n.species === ant.species);
     if (homeNest) return { ...homeNest.pos };
   }
-
+  // ── Drones: patrol / linger near their home nest (tactical reserve) ─────────
+  if (ant.role === "drone") {
+    const homeNest = nests.find((n) => n.species === ant.species);
+    if (homeNest) {
+      const angle = Math.random() * Math.PI * 2;
+      const r = 30 + Math.random() * (DRONE_LINGER_RADIUS - 30);
+      return clampToWorld(
+        {
+          x: homeNest.pos.x + Math.cos(angle) * r,
+          y: homeNest.pos.y + Math.sin(angle) * r,
+        },
+        worldWidth,
+        worldHeight,
+      );
+    }
+    return randomRoam(ant, worldWidth, worldHeight);
+  }
   const roll = Math.random();
 
-  // ── Soldiers & queens: strongly drawn to attack trails ───────────────────
+  // ── Soldiers & queens: late-game march on enemy nest; else follow attack trail ─
   if (ant.role === "soldier" || ant.role === "queen") {
+    const homeNest = nests.find((n) => n.species === ant.species);
+    if (
+      homeNest &&
+      getColonyPhase(homeNest) === "late" &&
+      roll < LATE_ENEMY_NEST_BIAS
+    ) {
+      const enemyNest = nests.find((n) => n.species !== ant.species);
+      if (enemyNest) return { ...enemyNest.pos };
+    }
     if (roll < SOLDIER_ATTACK_BIAS) {
       const atkTrail = pheromones.queryStrongest(
         ant.pos,
@@ -197,11 +229,11 @@ function decideTarget(
     }
   }
 
-  // ── Workers & drones: follow food trail toward its DIM end (= food source) ─
+  // ── Workers: follow food trail toward its DIM end (= food source) ────────────
   // queryWeakest returns the pheromone with the lowest strength within range.
   // Since food pheromones are deposited on the return trip (food→nest),
   // the weakest end of the trail points toward where the food was picked up.
-  if (!isCarrying && (ant.role === "worker" || ant.role === "drone")) {
+  if (!isCarrying && ant.role === "worker") {
     if (roll < WORKER_FOOD_BIAS) {
       const foodTrail = pheromones.queryWeakest(
         ant.pos,
@@ -248,7 +280,7 @@ function decideTarget(
         PHEROMONE_SMELL_RADIUS,
       ) === null;
     const sightR =
-      ant.role === "worker" || ant.role === "drone"
+      ant.role === "worker"
         ? noTrailNearby
           ? WORKER_TRAIL_END_SIGHT_RADIUS
           : WORKER_FOOD_SIGHT_RADIUS
