@@ -145,16 +145,19 @@ export function update(
     dt,
   );
 
-  // Freeze player movement for the duration of any active fight
+  // Freeze ALL combatants for the duration of any active (unresolved) fight
+  for (const rec of fights.records.values()) {
+    if (rec.resolvedOutcome !== null) continue; // already resolved — let winner walk
+    rec.antA.target = null;
+    rec.antB.target = null;
+  }
+  // Also clear the player's march flag if they're in a fight
   const playerInActiveFight = [...fights.records.values()].some(
     (r) =>
       (r.antA === state.playerAnt || r.antB === state.playerAnt) &&
       r.resolvedOutcome === null,
   );
-  if (playerInActiveFight) {
-    state.playerAnt.target = null;
-    state.flag = null;
-  }
+  if (playerInActiveFight) state.flag = null;
 
   // Detect player death (combat OR starvation) — show respawn dialog once
   if (!state.playerAnt.isAlive && !state.pendingRespawn) {
