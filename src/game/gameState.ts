@@ -71,49 +71,28 @@ export function createGameState(): GameState {
   const playerAnt = new Ant(
     "black",
     "soldier",
-    { x: worldWidth / 2, y: worldHeight / 2 },
+    { x: worldWidth / 2 - 80, y: worldHeight / 2 - 120 },
     true,
   );
   playerAnt.rank = 0;
 
+  // spawn some friendly ants for testing 2 black workers, 1 buffed red soldier, 2 red workers
   const fellowBlackWorker = new Ant("black", "worker", {
-    x: worldWidth / 2 - 40,
-    y: worldHeight / 2 - 40,
+    x: worldWidth / 2 + 40,
+    y: worldHeight / 2 + 10,
   });
-  fellowBlackWorker.rank = 0;
-
   const testNpc = new Ant("red", "worker", {
-    x: worldWidth / 2 + 60,
-    y: worldHeight / 2,
+    x: worldWidth / 2 - 60,
+    y: worldHeight / 2 - 50,
   });
-  testNpc.rank = 0;
-
   const buffedNpc = new Ant("red", "soldier", {
-    x: worldWidth / 2 + 120,
-    y: worldHeight / 2,
-  });
-  buffedNpc.rank = 4;
-
-  const greenNpc = new Ant("green", "soldier", {
-    x: worldWidth / 2 - 80,
-    y: worldHeight / 2,
-  });
-  greenNpc.rank = 1;
-
-  const yellowNpc = new Ant("yellow", "worker", {
-    x: worldWidth / 2,
+    x: worldWidth / 2 - 100,
     y: worldHeight / 2 + 80,
   });
-  yellowNpc.rank = 0;
+  buffedNpc.attack += 4;
+  buffedNpc.defense += 4;
 
-  const allAnts: Ant[] = [
-    playerAnt,
-    fellowBlackWorker,
-    testNpc,
-    buffedNpc,
-    greenNpc,
-    yellowNpc,
-  ];
+  const allAnts: Ant[] = [playerAnt, fellowBlackWorker, testNpc, buffedNpc];
 
   // ---- Food items scattered around the spawn area ------------------------
   const foodSpawns: Point[] = [

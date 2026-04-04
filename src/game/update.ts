@@ -12,6 +12,7 @@ import { circlesOverlap } from "../collision";
 import { getContactRadius } from "../combat";
 import { FOOD_QUIPS_HUNGRY } from "../prefabs/playerAntPrefab";
 import { DEPOSIT_INTERVAL } from "../world/pheromoneLayer";
+import { tickNpcAI } from "../ai/npcAI";
 
 const SCROLL_SPEED = 600; // px/s
 const EDGE_ZONE = 40; // px from canvas edge to trigger edge scroll
@@ -133,6 +134,16 @@ export function update(
   }
 
   fights.update(state.allAnts, state.gameTime);
+
+  // ---- NPC autonomous AI --------------------------------------------------
+  tickNpcAI(
+    state.allAnts,
+    state.foods,
+    state.pheromoneLayer,
+    state.worldWidth,
+    state.worldHeight,
+    dt,
+  );
 
   // Freeze player movement for the duration of any active fight
   const playerInActiveFight = [...fights.records.values()].some(

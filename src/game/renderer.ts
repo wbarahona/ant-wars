@@ -40,9 +40,19 @@ export function render(state: GameState, fights: FightManager): void {
   drawOverworld(ctx, worldWidth, worldHeight);
   if (flag) drawFlag(ctx, flag);
 
-  // Pheromone trails — below food and ants
-  state.pheromoneLayer.draw(ctx, "food", state.showFoodTrail);
-  state.pheromoneLayer.draw(ctx, "attack", state.showAttackTrail);
+  // Pheromone trails — below food and ants (own-colony only)
+  state.pheromoneLayer.draw(
+    ctx,
+    "food",
+    state.showFoodTrail,
+    playerAnt.species,
+  );
+  state.pheromoneLayer.draw(
+    ctx,
+    "attack",
+    state.showAttackTrail,
+    playerAnt.species,
+  );
 
   // Ground food (drawn below ants)
   for (const food of foods) {
@@ -121,6 +131,7 @@ export function render(state: GameState, fights: FightManager): void {
     ctx,
     "food",
     state.showFoodTrail,
+    playerAnt.species,
     mm.x,
     mm.y,
     mm.width,
@@ -132,6 +143,7 @@ export function render(state: GameState, fights: FightManager): void {
     ctx,
     "attack",
     state.showAttackTrail,
+    playerAnt.species,
     mm.x,
     mm.y,
     mm.width,

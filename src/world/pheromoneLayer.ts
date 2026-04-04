@@ -59,18 +59,21 @@ export class PheromoneLayer {
 
   /**
    * Draw all pheromones of the given type in world space.
+   * Only pheromones belonging to `playerSpecies` are drawn — enemy trails are
+   * invisible to the player but still exist for enemy AI.
    * ctx must already be translated by (-camera.x, -camera.y).
    */
   draw(
     ctx: CanvasRenderingContext2D,
     type: PheromoneType,
     visible: boolean,
+    playerSpecies: AntSpecies,
   ): void {
     if (!visible) return;
     const col = TRAIL_COLOR[type];
     ctx.fillStyle = col;
     for (const p of this.pheromones) {
-      if (p.type !== type) continue;
+      if (p.type !== type || p.species !== playerSpecies) continue;
       ctx.globalAlpha = p.strength * 0.55;
       ctx.beginPath();
       ctx.arc(p.pos.x, p.pos.y, 3, 0, Math.PI * 2);
@@ -81,12 +84,14 @@ export class PheromoneLayer {
 
   /**
    * Draw pheromone dots on top of the minimap (screen space).
+   * Only pheromones belonging to `playerSpecies` are drawn.
    * mmX/mmY/mmW/mmH describe the minimap's world-area rect in screen pixels.
    */
   drawMinimap(
     ctx: CanvasRenderingContext2D,
     type: PheromoneType,
     visible: boolean,
+    playerSpecies: AntSpecies,
     mmX: number,
     mmY: number,
     mmW: number,
@@ -98,10 +103,10 @@ export class PheromoneLayer {
     const col = MINIMAP_COLOR[type];
     ctx.fillStyle = col;
     for (const p of this.pheromones) {
-      if (p.type !== type || p.strength < 0.2) continue;
+      if (p.type !== type || p.species !== playerSpecies || p.strength < 0.2)
+        continue;
       const sx = mmX + (p.pos.x / worldWidth) * mmW;
       const sy = mmY + (p.pos.y / worldHeight) * mmH;
-      // Clamp to minimap area
       if (sx < mmX || sx > mmX + mmW || sy < mmY || sy > mmY + mmH) continue;
       ctx.globalAlpha = p.strength * 0.5;
       ctx.fillRect(sx - 1, sy - 1, 2, 2);
@@ -112,7 +117,6 @@ export class PheromoneLayer {
   /**
    * Find the nearest pheromone of a given type and species within radius.
    * Returns null when nothing qualifies.
-   * ─ Reserved for upcoming NPC AI module ─
    */
   queryNearest(
     pos: Point,
@@ -129,6 +133,33 @@ export class PheromoneLayer {
       const d2 = dx * dx + dy * dy;
       if (d2 < bestDist) {
         bestDist = d2;
+        best = p;
+      }
+    }
+    return best;
+  }
+
+  /**
+   * Gradient climbing: find the STRONGEST (freshest) pheromone within radius.
+   * Freshest particles were deposited most recently — closest to the source
+   * (food item or combat site). Following them steers the ant toward the goal.
+   */
+  queryStrongest(
+    pos: Point,
+    type: PheromoneType,
+    species: AntSpecies,
+    radius: number,
+  ): Pheromone | null {
+    let best: Pheromone | null = null;
+    let bestStrength = 0;
+    const r2 = radius * radius;
+    for (const p of this.pheromones) {
+      if (p.type !== type || p.species !== species) continue;
+      const dx = p.pos.x - pos.x;
+      const dy = p.pos.y - pos.y;
+      if (dx * dx + dy * dy > r2) continue;
+      if (p.strength > bestStrength) {
+        bestStrength = p.strength;
         best = p;
       }
     }
