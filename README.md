@@ -2,6 +2,10 @@
 
 A top-down real-time action game rendered on an HTML5 `<canvas>`. You play as a single ant on a scrollable overworld, fight enemy ants from rival species, earn kills to climb the enlisted rank ladder, and try to survive.
 
+This game is a personal project built with TypeScript and Vite. All art is procedurally drawn — no external assets or runtime dependencies, just a fun little sandbox to experiment with game mechanics and rendering techniques.
+
+🦾🤖 I have vibecoded this project entirely, intervening only in certain areas.
+
 ---
 
 ## Install & Run

@@ -31,9 +31,9 @@
       /* ---- Burger button ------------------------------------------------- */
       #hud-toggle {
         position: fixed;
-        top: 12px;
+        top: 5px;
         right: 12px;
-        z-index: 200;
+        z-index: 600;
         background: rgba(15, 15, 30, 0.82);
         border: 1px solid #2a2a4a;
         border-radius: 6px;
@@ -55,7 +55,7 @@
         top: 0;
         right: 0;
         bottom: 0;
-        width: 220px;
+        width: 320px;
         background: rgba(20, 20, 46, 0.96);
         color: #d0d0d0;
         font-family: "Courier New", monospace;
@@ -228,6 +228,38 @@
     <div id="notification-banner">
       <span id="notification-text"></span>
     </div>
+
+    <!-- ── Tutorial hints ───────────────────────────────────────────────────── -->
+    <style>
+      #hint-banner {
+        display: none;
+        position: fixed;
+        bottom: 60px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 33vw;
+        min-width: 260px;
+        z-index: 490;
+        justify-content: center;
+        align-items: center;
+        background: rgba(10, 10, 24, 0.88);
+        border: 1px solid #2a2a4a;
+        border-radius: 8px;
+        padding: 10px 18px;
+        pointer-events: none;
+        user-select: none;
+        opacity: 0;
+      }
+      #hint-text {
+        font-family: "Courier New", monospace;
+        font-size: 13px;
+        color: #b0b0d0;
+        text-align: center;
+        line-height: 1.5;
+        letter-spacing: 0.5px;
+      }
+    </style>
+    <div id="hint-banner"><span id="hint-text"></span></div>
 
     <button id="hud-toggle" title="Toggle stats (Tab)">&#9776;</button>
 

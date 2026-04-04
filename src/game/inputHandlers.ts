@@ -134,6 +134,10 @@ export function registerInputHandlers(
           if (action === "release") {
             state.followerCount = releaseSquad(state.allAnts);
           }
+          if (action === "askFood") {
+            const ally = findClosestAlly(state);
+            if (ally) state.replenishTarget = ally;
+          }
         },
       );
     }
@@ -191,7 +195,11 @@ export function registerInputHandlers(
         if (action === "release") {
           state.followerCount = releaseSquad(state.allAnts);
         }
-        // "askFood" — no game state change yet
+        if (action === "askFood") {
+          const ally = findClosestAlly(state);
+          if (ally) state.replenishTarget = ally;
+        }
+        // "askFood" handled above
       },
     );
   });
@@ -306,4 +314,33 @@ export function registerInputHandlers(
     state.flag = { x: worldClickX, y: worldClickY };
     orderMarch(state.playerAnt, state.flag, state.followerCount);
   });
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/**
+ * Returns the closest alive friendly ant to the player (excluding the player
+ * itself and any current replenishTarget already in motion).
+ */
+function findClosestAlly(
+  state: GameState,
+): import("../entities/ant").Ant | null {
+  const player = state.playerAnt;
+  let best: import("../entities/ant").Ant | null = null;
+  let bestDist = Infinity;
+  for (const ant of state.allAnts) {
+    if (ant === player) continue;
+    if (!ant.isAlive) continue;
+    if (ant.species !== player.species) continue;
+    if (ant === state.replenishTarget) continue;
+    if (ant.role !== "worker" && ant.role !== "soldier") continue;
+    const dx = ant.pos.x - player.pos.x;
+    const dy = ant.pos.y - player.pos.y;
+    const d = dx * dx + dy * dy;
+    if (d < bestDist) {
+      bestDist = d;
+      best = ant;
+    }
+  }
+  return best;
 }

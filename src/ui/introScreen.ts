@@ -454,12 +454,25 @@ export function showIntroScreen(
       },
     );
     sub.textContent = "Conquer the overworld";
+    const credits = el(
+      "p",
+      {},
+      {
+        fontFamily: "'Courier New', monospace",
+        fontSize: "10px",
+        color: "#4a4a6a",
+        letterSpacing: "2px",
+        marginTop: "12px",
+      },
+    );
+    credits.textContent = "Vibecoded by Wilmer Barahona";
 
     const playBtn = makeBtn("Play", true);
     playBtn.addEventListener("click", showSpeciesSelect);
 
     wrap.appendChild(titleEl);
     wrap.appendChild(sub);
+    wrap.appendChild(credits);
     wrap.appendChild(playBtn);
     overlay.appendChild(wrap);
   }

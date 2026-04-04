@@ -13,9 +13,11 @@ import { drawPlayerAnt } from "../prefabs/playerAntPrefab";
 import { drawAnt } from "../prefabs/antPrefab";
 import { updatePlayerStats, updateColonyPanels } from "../ui/statsPanel";
 import { updateNotificationBanner } from "../ui/notificationBanner";
+import { updateHints } from "../ui/hints";
 import { drawFightCloud, drawFightResolution } from "../gfx/fightCloud";
 import { drawFood } from "../prefabs/foodPrefab";
 import { drawAnthill } from "../prefabs/anthillPrefab";
+import { setGamePaused } from "../audio/audioManager";
 
 export function render(state: GameState, fights: FightManager): void {
   const {
@@ -183,8 +185,10 @@ export function render(state: GameState, fights: FightManager): void {
   updatePlayerStats(playerAnt);
   updateColonyPanels(state.nests, state.playerSpecies, state.foeSpecies);
   updateNotificationBanner(state, fights);
+  updateHints(state.phase);
 
   // ---- Pause overlay -------------------------------------------------------
+  setGamePaused(state.paused);
   if (state.paused) {
     ctx.save();
     ctx.fillStyle = "rgba(0,0,0,0.45)";
