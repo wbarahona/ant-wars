@@ -91,26 +91,13 @@ export function playTrack(id: TrackId): void {
   }
 
   // Fade in new track — runs concurrently on its own timer.
-  // On first load the browser may block autoplay. If .play() rejects we
-  // register a one-time pointerdown retry so music starts on the very first
-  // user interaction (which will happen naturally — species picker, etc.).
+  // All callers of playTrack() must be inside a user-gesture handler so
+  // .play() is guaranteed to succeed (no silent-catch retry needed).
   const next = tracks[id];
-  next.currentTime = 0;
-  next.volume = 0;
-  next.play().catch(() => {
-    document.addEventListener(
-      "pointerdown",
-      () => {
-        if (current !== id) return; // track was already superseded (e.g.overworld)
-        clearFade(id);
-        next.volume = 0;
-        next.currentTime = 0;
-        next.play().catch(() => {});
-        fadeTo(id, VOLUME_NORMAL);
-      },
-      { once: true },
-    );
-  });
+  if (next.paused) {
+    next.currentTime = 0;
+    next.play().catch(() => {});
+  }
   fadeTo(id, VOLUME_NORMAL);
 }
 

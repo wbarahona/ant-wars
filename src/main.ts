@@ -9,12 +9,15 @@ import type { AntSpecies } from "./types";
 
 // ---- Boot ------------------------------------------------------------------
 
-// Attempt autoplay immediately — works on reload when the browser has already
-// recorded user engagement with the page (MEI ≥ 0.5). If blocked, audioManager
-// queues a first-pointer-down retry automatically.
-playTrack("intro");
+// Browsers block audio that isn't triggered by a user gesture.
+// Defer intro music to the first pointer interaction so it always succeeds.
+document.addEventListener("pointerdown", () => playTrack("intro"), {
+  once: true,
+});
 
 showIntroScreen((playerSpecies: AntSpecies, foeSpecies: AntSpecies) => {
+  // "click" is a user-gesture context, so playTrack succeeds unconditionally.
+  playTrack("overworld");
   const state = createGameState(playerSpecies, foeSpecies);
   const fights = new FightManager();
 
