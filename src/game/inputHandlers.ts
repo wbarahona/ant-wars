@@ -9,6 +9,7 @@ import type { GameState } from "./gameState";
 import { resizeViewport, respawnPlayer } from "./gameState";
 import type { FightManager } from "./fightManager";
 import { Nest } from "../entities/nest";
+import { Ant } from "../entities/ant";
 import { showBurrowDialog } from "./burrowDialog";
 import { ANTHILL_HALF_W, ANTHILL_HEIGHT } from "../prefabs/anthillPrefab";
 import {
@@ -64,6 +65,66 @@ export function registerInputHandlers(
       e.preventDefault();
       toggleStats();
     }
+
+    // Q key: snap camera to player ant and open context menu at cursor
+    if (e.key === "q" || e.key === "Q") {
+      if (!state.playerAnt.isAlive) return;
+      if (state.phase === "game_over") return;
+
+      // Center viewport on player
+      state.camera.centerOn(state.playerAnt.pos.x, state.playerAnt.pos.y);
+
+      // Use current mouse position (or fall back to screen centre)
+      const mx = state.input.mouseX >= 0 ? state.input.mouseX : state.vw / 2;
+      const my = state.input.mouseY >= 0 ? state.input.mouseY : state.vh / 2;
+
+      const isHungry =
+        state.playerAnt.energy / state.playerAnt.maxEnergy <= 0.2;
+      showPlayerContextMenu(
+        state.playerAnt,
+        mx,
+        my,
+        isHungry,
+        state.phase,
+        (action: ContextMenuAction) => {
+          if (action === "burrowHere") {
+            const playerNest = new Nest(state.playerAnt.species, {
+              x: state.playerAnt.pos.x,
+              y: state.playerAnt.pos.y,
+            });
+            const colonyQueen = new Ant(state.playerAnt.species, "queen", {
+              x: state.playerAnt.pos.x + (Math.random() - 0.5) * 40,
+              y: state.playerAnt.pos.y + (Math.random() - 0.5) * 40,
+            });
+            playerNest.queenAnt = colonyQueen;
+            state.allAnts.push(colonyQueen);
+            state.nests.push(playerNest);
+            showBurrowDialog(state.playerAnt.species, (role) => {
+              respawnPlayer(state, role);
+              state.phase = "playing";
+            });
+            return;
+          }
+          if (action === "recruit5") {
+            state.followerCount = recruitAnts(
+              5,
+              state.allAnts,
+              state.playerAnt,
+            );
+          }
+          if (action === "recruit10") {
+            state.followerCount = recruitAnts(
+              10,
+              state.allAnts,
+              state.playerAnt,
+            );
+          }
+          if (action === "release") {
+            state.followerCount = releaseSquad(state.allAnts);
+          }
+        },
+      );
+    }
   });
 
   // ---- Right-click: player ant context menu --------------------------------
@@ -95,6 +156,13 @@ export function registerInputHandlers(
             x: state.playerAnt.pos.x,
             y: state.playerAnt.pos.y,
           });
+          // Spawn the colony NPC queen next to the burrow (not player-controlled)
+          const colonyQueen = new Ant(state.playerAnt.species, "queen", {
+            x: state.playerAnt.pos.x + (Math.random() - 0.5) * 40,
+            y: state.playerAnt.pos.y + (Math.random() - 0.5) * 40,
+          });
+          playerNest.queenAnt = colonyQueen;
+          state.allAnts.push(colonyQueen);
           state.nests.push(playerNest);
           showBurrowDialog(state.playerAnt.species, (role) => {
             respawnPlayer(state, role);

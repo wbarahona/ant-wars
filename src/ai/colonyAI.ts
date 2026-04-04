@@ -13,8 +13,12 @@ import { Ant } from "../entities/ant";
 import type { Nest } from "../entities/nest";
 import type { AntRole } from "../types";
 
-/** Food pieces consumed per spawned ant. */
-const SPAWN_COST = 1;
+/** Food pieces consumed per spawned ant, by caste. */
+const SPAWN_COST: Partial<Record<AntRole, number>> = {
+  worker: 1,
+  soldier: 2,
+  drone: 3,
+};
 
 // ── Colony game phase ─────────────────────────────────────────────────────────
 /**
@@ -27,7 +31,7 @@ const SPAWN_COST = 1;
 export type ColonyPhase = "early" | "mid" | "late";
 
 const EARLY_POP_CAP = 12;
-const LATE_POP_FLOOR = 35;
+const LATE_POP_FLOOR = 60;
 
 export function getColonyPhase(nest: Nest): ColonyPhase {
   if (nest.population < EARLY_POP_CAP) return "early";
@@ -112,15 +116,16 @@ export function tickColonyAI(nests: Nest[], allAnts: Ant[], dt: number): void {
     // Reset cooldown (phase-dependent; faster in mid/late once food income is healthy)
     nest.spawnTimer = PHASE_INTERVAL[getColonyPhase(nest)];
 
-    if (nest.foodStored < SPAWN_COST) continue;
-
     const role = pickCaste(nest);
+    const cost = SPAWN_COST[role] ?? 1;
+    if (nest.foodStored < cost) continue;
+
     const ant = new Ant(nest.species, role, {
       x: nest.pos.x + jitter(),
       y: nest.pos.y + jitter(),
     });
 
-    nest.foodStored -= SPAWN_COST;
+    nest.foodStored -= cost;
     allAnts.push(ant);
   }
 }

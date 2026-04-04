@@ -1,5 +1,6 @@
 import type { Ant } from "../entities/ant";
 import type { Nest } from "../entities/nest";
+import type { AntSpecies } from "../types";
 import { RANKS } from "../types";
 import { drawRankInsignia } from "../prefabs/playerAntPrefab";
 
@@ -122,8 +123,6 @@ export function updatePlayerStats(ant: Ant): void {
 
 // Two fixed panels: 0 = player colony (black), 1 = opfor (red).
 // Keyed by species so array order in state.nests doesn't matter.
-const PANEL_SPECIES = ["black", "red"] as const;
-
 let tabsInitialised = false;
 function initColonyTabs(): void {
   if (tabsInitialised) return;
@@ -143,10 +142,16 @@ function initColonyTabs(): void {
   }
 }
 
-export function updateColonyPanels(nests: readonly Nest[]): void {
+export function updateColonyPanels(
+  nests: readonly Nest[],
+  playerSpecies: AntSpecies,
+  foeSpecies: AntSpecies,
+): void {
   initColonyTabs();
 
-  PANEL_SPECIES.forEach((species, i) => {
+  const panelSpecies: AntSpecies[] = [playerSpecies, foeSpecies];
+
+  panelSpecies.forEach((species, i) => {
     const nest = nests.find((n) => n.species === species);
     const set = (suffix: string, val: string | number) => {
       const el = document.getElementById(`colony-${i}-${suffix}`);

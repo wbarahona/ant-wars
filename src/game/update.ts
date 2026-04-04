@@ -5,7 +5,7 @@
  */
 
 import type { GameState } from "./gameState";
-import { respawnPlayer } from "./gameState";
+import { respawnPlayer, spawnRandomFoodClumps } from "./gameState";
 import type { FightManager } from "./fightManager";
 import { showRespawnDialog } from "./respawnDialog";
 import { circlesOverlap } from "../collision";
@@ -18,6 +18,7 @@ import { DEPOSIT_INTERVAL } from "../world/pheromoneLayer";
 import { tickNpcAI } from "../ai/npcAI";
 import { tickColonyAI } from "../ai/colonyAI";
 import { countSquad } from "./squadManager";
+import { showGameEndScreen } from "../ui/gameEndScreen";
 
 const SCROLL_SPEED = 600; // px/s
 const EDGE_ZONE = 40; // px from canvas edge to trigger edge scroll
@@ -34,6 +35,8 @@ export function update(
   fights: FightManager,
   dt: number,
 ): void {
+  // Game over — stop ticking
+  if (state.phase === "game_over") return;
   let dx = 0;
   let dy = 0;
 
@@ -214,6 +217,16 @@ export function update(
   // ---- Colony spawn AI (grow population with delivered food) ----------------
   tickColonyAI(state.nests, state.allAnts, dt);
 
+  // ---- Food refill: replenish when overworld drops below 20% of initial ----
+  if (
+    state.phase === "playing" &&
+    state.foods.length < state.foodInitialCount * 0.2
+  ) {
+    const newFood = spawnRandomFoodClumps(state.worldWidth, state.worldHeight);
+    state.foods.push(...newFood);
+    state.foodInitialCount = state.foods.length;
+  }
+
   // Freeze ALL combatants for the duration of any active (unresolved) fight
   for (const rec of fights.records.values()) {
     if (rec.resolvedOutcome !== null) continue; // already resolved — let winner walk
@@ -233,5 +246,28 @@ export function update(
     state.pendingRespawn = true;
     state.flag = null; // clear any pending march marker
     showRespawnDialog((role) => respawnPlayer(state, role));
+  }
+
+  // ---- Win / lose detection (only while playing + both queens known) -------
+  if (state.phase === "playing") {
+    const playerNest = state.nests.find(
+      (n) => n.species === state.playerSpecies,
+    );
+    const foeNest = state.nests.find((n) => n.species === state.foeSpecies);
+    const playerQueen = playerNest?.queenAnt;
+    const foeQueen = foeNest?.queenAnt;
+
+    // Only start checking once the player has placed their burrow
+    if (playerQueen && foeQueen) {
+      if (!foeQueen.isAlive) {
+        state.phase = "game_over";
+        state.gameResult = "victory";
+        showGameEndScreen("victory", state.nests);
+      } else if (!playerQueen.isAlive) {
+        state.phase = "game_over";
+        state.gameResult = "defeat";
+        showGameEndScreen("defeat", state.nests);
+      }
+    }
   }
 }

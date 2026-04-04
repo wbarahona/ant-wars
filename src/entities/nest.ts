@@ -38,6 +38,9 @@ export class Nest {
   /** Countdown (seconds) until the next spawn attempt. */
   spawnTimer = 0;
 
+  /** This colony's queen ant (NPC). Null until the queen is spawned. */
+  queenAnt: Ant | null = null;
+
   constructor(species: AntSpecies, pos: { x: number; y: number }) {
     this.species = species;
     this.color = SPECIES_COLOR[species];

@@ -65,6 +65,9 @@ const DRONE_LINGER_RADIUS = 160;
 /** Late-game probability that soldiers march directly on the enemy nest. */
 const LATE_ENEMY_NEST_BIAS = 0.75;
 
+/** Probability that a soldier hunts the enemy queen directly (any phase once queen is known). */
+const QUEEN_HUNT_BIAS = 0.85;
+
 /** World-px orbit radius for recruited squad members around the player ant. */
 const SQUAD_ORBIT_RADIUS = 200;
 
@@ -230,17 +233,43 @@ function decideTarget(
   }
   const roll = Math.random();
 
-  // ── Soldiers & queens: late-game march on enemy nest; else follow attack trail ─
+  // ── Soldiers & queens: hunt enemy queen > late-game nest march > attack trail ──
   if (ant.role === "soldier" || ant.role === "queen") {
     const homeNest = nests.find((n) => n.species === ant.species);
+    const enemyNest = nests.find((n) => n.species !== ant.species);
+
+    // NPC queen: guard the home nest — stay close rather than roaming
+    if (ant.role === "queen") {
+      if (homeNest) {
+        const angle = Math.random() * Math.PI * 2;
+        const r = 20 + Math.random() * 60;
+        return clampToWorld(
+          {
+            x: homeNest.pos.x + Math.cos(angle) * r,
+            y: homeNest.pos.y + Math.sin(angle) * r,
+          },
+          worldWidth,
+          worldHeight,
+        );
+      }
+      return randomRoam(ant, worldWidth, worldHeight);
+    }
+
+    // Soldiers: hunt the enemy queen only once the colony reaches late phase
+    const isLate = homeNest && getColonyPhase(homeNest) === "late";
+    if (isLate && roll < QUEEN_HUNT_BIAS && enemyNest?.queenAnt?.isAlive) {
+      return { ...enemyNest.queenAnt.pos };
+    }
+
+    // Fallback: late-game march on enemy nest
     if (
       homeNest &&
       getColonyPhase(homeNest) === "late" &&
       roll < LATE_ENEMY_NEST_BIAS
     ) {
-      const enemyNest = nests.find((n) => n.species !== ant.species);
       if (enemyNest) return { ...enemyNest.pos };
     }
+
     if (roll < SOLDIER_ATTACK_BIAS) {
       const atkTrail = pheromones.queryStrongest(
         ant.pos,

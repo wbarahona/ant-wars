@@ -12,6 +12,7 @@
  *   - alive
  *   - not the player ant itself
  *   - not a drone (drones are tactical reserves, never recruited)
+ *   - not a queen (queens guard the nest, never recruited)
  *   - not already recruited
  */
 
@@ -38,6 +39,7 @@ export function recruitAnts(
         a.isAlive &&
         a.species === playerAnt.species &&
         a.role !== "drone" &&
+        a.role !== "queen" &&
         !a.isRecruited,
     )
     .sort(

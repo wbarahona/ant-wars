@@ -6,7 +6,7 @@
  */
 
 import type { Point } from "../types";
-import type { AntRole } from "../types";
+import type { AntRole, AntSpecies } from "../types";
 import { Camera } from "../world/camera";
 import { InputHandler } from "../input";
 import { Ant } from "../entities/ant";
@@ -15,7 +15,10 @@ import { Nest } from "../entities/nest";
 import { PheromoneLayer } from "../world/pheromoneLayer";
 
 /** Phases of the game flow. */
-export type GamePhase = "placing_burrow" | "playing";
+export type GamePhase = "placing_burrow" | "playing" | "game_over";
+
+/** Result written when phase reaches game_over. */
+export type GameResult = "victory" | "defeat";
 
 export interface GameState {
   // Render targets
@@ -46,6 +49,9 @@ export interface GameState {
   // Game phase
   phase: GamePhase;
 
+  /** Set to "victory" or "defeat" when phase === "game_over". */
+  gameResult: GameResult | null;
+
   // Respawn flow
   /** True from the moment the player dies until the new ant is spawned. */
   pendingRespawn: boolean;
@@ -54,9 +60,19 @@ export interface GameState {
   pheromoneLayer: PheromoneLayer;
   showFoodTrail: boolean;
   showAttackTrail: boolean;
+
+  /** Species of the player colony and the foe colony. */
+  playerSpecies: AntSpecies;
+  foeSpecies: AntSpecies;
+
+  /** Number of food items when the world was last fully seeded (used for refill threshold). */
+  foodInitialCount: number;
 }
 
-export function createGameState(): GameState {
+export function createGameState(
+  playerSpecies: AntSpecies = "black",
+  foeSpecies: AntSpecies = "red",
+): GameState {
   // ---- Canvas sizing: full window -----------------------------------------
   const canvas = document.getElementById("game-canvas") as HTMLCanvasElement;
   const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
@@ -80,7 +96,7 @@ export function createGameState(): GameState {
   const playerSpawnX = Math.round(worldWidth * 0.1);
   const playerSpawnY = Math.round(worldHeight / 2);
   const playerAnt = new Ant(
-    "black",
+    playerSpecies,
     "queen",
     { x: playerSpawnX, y: playerSpawnY },
     true,
@@ -93,20 +109,26 @@ export function createGameState(): GameState {
   // array only when the player places the burrow during placing_burrow phase.
   const redNestX = Math.round(worldWidth * 0.9);
   const redNestY = Math.round(worldHeight / 2);
-  const redNest = new Nest("red", { x: redNestX, y: redNestY });
+  const redNest = new Nest(foeSpecies, { x: redNestX, y: redNestY });
   const nests: Nest[] = [redNest];
 
-  // ---- OpFor ants — 1 soldier + 3 workers near the red nest ---------------
+  // ---- OpFor ants — queen + 1 soldier + 1 worker near the red nest --------
   const allAnts: Ant[] = [playerAnt];
+  const redQueen = new Ant(foeSpecies, "queen", {
+    x: redNest.pos.x + (Math.random() - 0.5) * 40,
+    y: redNest.pos.y + (Math.random() - 0.5) * 40,
+  });
+  redNest.queenAnt = redQueen;
+  allAnts.push(redQueen);
   allAnts.push(
-    new Ant("red", "soldier", {
+    new Ant(foeSpecies, "soldier", {
       x: redNest.pos.x + (Math.random() - 0.5) * 60,
       y: redNest.pos.y + (Math.random() - 0.5) * 60,
     }),
   );
   for (let i = 0; i < 1; i++) {
     allAnts.push(
-      new Ant("red", "worker", {
+      new Ant(foeSpecies, "worker", {
         x: redNest.pos.x + (Math.random() - 0.5) * 60,
         y: redNest.pos.y + (Math.random() - 0.5) * 60,
       }),
@@ -145,10 +167,14 @@ export function createGameState(): GameState {
     foods,
     nests,
     phase: "placing_burrow",
+    gameResult: null,
     pendingRespawn: false,
     pheromoneLayer: new PheromoneLayer(),
     showFoodTrail: true,
     showAttackTrail: true,
+    playerSpecies,
+    foeSpecies,
+    foodInitialCount: foods.length,
   };
 }
 
@@ -206,6 +232,42 @@ export function respawnPlayer(state: GameState, newRole: AntRole): void {
  *   • One patch near each nest
  *   • Several mid-world patches at spread-out grid-jittered positions
  */
+export function spawnRandomFoodClumps(
+  worldWidth: number,
+  worldHeight: number,
+): Food[] {
+  const MARGIN = 30;
+  const cols = 3;
+  const rows = 3;
+  const foods: Food[] = [];
+  for (let col = 0; col < cols; col++) {
+    for (let row = 0; row < rows; row++) {
+      const nx = 0.15 + (col / (cols - 1)) * 0.7;
+      const ny = 0.15 + (row / (rows - 1)) * 0.7;
+      const jx = (Math.random() - 0.5) * worldWidth * 0.16;
+      const jy = (Math.random() - 0.5) * worldHeight * 0.16;
+      const cx = worldWidth * nx + jx;
+      const cy = worldHeight * ny + jy;
+      const count = 4 + Math.floor(Math.random() * 4); // 4–7 items
+      const radius = 80 + Math.random() * 80;
+      for (let i = 0; i < count; i++) {
+        const r = radius * Math.sqrt(Math.random());
+        const angle = Math.random() * Math.PI * 2;
+        const x = Math.max(
+          MARGIN,
+          Math.min(worldWidth - MARGIN, cx + Math.cos(angle) * r),
+        );
+        const y = Math.max(
+          MARGIN,
+          Math.min(worldHeight - MARGIN, cy + Math.sin(angle) * r),
+        );
+        foods.push(new Food({ x, y }));
+      }
+    }
+  }
+  return foods;
+}
+
 function spawnFoodClumps(
   worldWidth: number,
   worldHeight: number,

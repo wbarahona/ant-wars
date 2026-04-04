@@ -70,6 +70,22 @@ export function render(state: GameState, fights: FightManager): void {
   }
   drawPlayerAnt(ctx, playerAnt);
 
+  // NPC queen indicator — pulsing gold ring so they stand out as VIP targets
+  for (const nest of state.nests) {
+    const q = nest.queenAnt;
+    if (!q || !q.isAlive) continue;
+    const pulse = 0.55 + 0.45 * Math.sin(state.gameTime * 4);
+    ctx.save();
+    ctx.strokeStyle = nest.species === "black" ? "#f4d03f" : "#ff6b6b";
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = pulse;
+    ctx.beginPath();
+    ctx.arc(q.pos.x, q.pos.y, 18, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
   // Carried food (drawn above ants — shows as held in mandibles)
   for (const food of foods) {
     if (food.isCarried) drawFood(ctx, food);
@@ -164,5 +180,5 @@ export function render(state: GameState, fights: FightManager): void {
 
   // ---- HUD: right-side stats panel ----------------------------------------
   updatePlayerStats(playerAnt);
-  updateColonyPanels(state.nests);
+  updateColonyPanels(state.nests, state.playerSpecies, state.foeSpecies);
 }
