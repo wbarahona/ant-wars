@@ -6,8 +6,10 @@
  */
 
 import type { GameState } from "./gameState";
-import { resizeViewport } from "./gameState";
+import { resizeViewport, respawnPlayer } from "./gameState";
 import type { FightManager } from "./fightManager";
+import { Nest } from "../entities/nest";
+import { showBurrowDialog } from "./burrowDialog";
 import {
   orderMarch,
   orderCharge,
@@ -83,7 +85,21 @@ export function registerInputHandlers(
       e.clientX,
       e.clientY,
       isHungry,
+      state.phase,
       (action: ContextMenuAction) => {
+        if (action === "burrowHere") {
+          // Place the player's nest at the queen's current position
+          const playerNest = new Nest(state.playerAnt.species, {
+            x: state.playerAnt.pos.x,
+            y: state.playerAnt.pos.y,
+          });
+          state.nests.push(playerNest);
+          showBurrowDialog(state.playerAnt.species, (role) => {
+            respawnPlayer(state, role);
+            state.phase = "playing";
+          });
+          return;
+        }
         if (action === "recruit5") state.followerCount += 5;
         if (action === "recruit10") state.followerCount += 10;
         if (action === "release") state.followerCount = 0;

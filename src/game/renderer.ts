@@ -14,6 +14,7 @@ import { drawAnt } from "../prefabs/antPrefab";
 import { updatePlayerStats } from "../ui/statsPanel";
 import { drawFightCloud, drawFightResolution } from "../gfx/fightCloud";
 import { drawFood } from "../prefabs/foodPrefab";
+import { drawAnthill } from "../prefabs/anthillPrefab";
 
 export function render(state: GameState, fights: FightManager): void {
   const {
@@ -39,6 +40,11 @@ export function render(state: GameState, fights: FightManager): void {
 
   drawOverworld(ctx, worldWidth, worldHeight);
   if (flag) drawFlag(ctx, flag);
+
+  // Anthills — drawn just above the overworld but below everything else
+  for (const nest of state.nests) {
+    drawAnthill(ctx, nest);
+  }
 
   // Pheromone trails — below food and ants (own-colony only)
   state.pheromoneLayer.draw(

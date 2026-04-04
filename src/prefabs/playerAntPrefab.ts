@@ -13,6 +13,7 @@
  */
 
 import type { Ant } from "../entities/ant";
+import type { GamePhase } from "../game/gameState";
 import type { RankLevel } from "../types";
 import { RANKS } from "../types";
 import { drawAnt } from "./antPrefab";
@@ -167,6 +168,7 @@ export function orderCharge(
 // ---- Context menu -----------------------------------------------------------
 
 export type ContextMenuAction =
+  | "burrowHere"
   | "recruit5"
   | "recruit10"
   | "release"
@@ -175,6 +177,14 @@ export type ContextMenuAction =
   | "trailAttack";
 
 const MENU_QUIPS: Record<ContextMenuAction, string[]> = {
+  burrowHere: [
+    "THIS SPOT WILL DO! DIGGING IN!",
+    "PERFECT GROUND — BURROW ESTABLISHED!",
+    "HOME IS WHERE YOU DIG IT!",
+    "COLONY FOUNDED RIGHT HERE!",
+    "BREAKING GROUND FOR THE QUEEN!",
+    "TUNNEL CREW, GET TO WORK!",
+  ],
   recruit5: [
     "I NEED 5 VOLUNTEER SISTERS!",
     "FIVE MORE TO THE CAUSE!",
@@ -265,6 +275,7 @@ export function showPlayerContextMenu(
   screenX: number,
   screenY: number,
   isHungry: boolean,
+  phase: GamePhase,
   onAction: (action: ContextMenuAction) => void,
 ): void {
   hidePlayerContextMenu();
@@ -286,6 +297,41 @@ export function showPlayerContextMenu(
     boxShadow: "0 4px 12px rgba(0,0,0,0.7)",
     userSelect: "none",
   });
+
+  // During burrow-placement phase show only the single burrow action
+  if (phase === "placing_burrow") {
+    const btn = document.createElement("div");
+    btn.textContent = "⬥  Burrow here";
+    Object.assign(btn.style, {
+      padding: "6px 14px",
+      color: "#f4d03f",
+      cursor: "pointer",
+      letterSpacing: "0.5px",
+      transition: "background 0.1s",
+    });
+    btn.addEventListener("mouseenter", () => {
+      btn.style.background = "#1f1f3a";
+    });
+    btn.addEventListener("mouseleave", () => {
+      btn.style.background = "transparent";
+    });
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      ant.setSpeechBubble(pick(MENU_QUIPS["burrowHere"]), 3000);
+      onAction("burrowHere");
+      hidePlayerContextMenu();
+    });
+    menu.appendChild(btn);
+
+    document.body.appendChild(menu);
+    const rect = menu.getBoundingClientRect();
+    if (rect.right > window.innerWidth)
+      menu.style.left = `${screenX - rect.width}px`;
+    if (rect.bottom > window.innerHeight)
+      menu.style.top = `${screenY - rect.height}px`;
+    activeMenu = menu;
+    return;
+  }
 
   const items: { action: ContextMenuAction; label: string; show: boolean }[] = [
     { action: "recruit5", label: "⚐  Recruit 5 ants", show: true },

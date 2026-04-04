@@ -11,7 +11,11 @@ import { Camera } from "../world/camera";
 import { InputHandler } from "../input";
 import { Ant } from "../entities/ant";
 import { Food } from "../entities/food";
+import { Nest } from "../entities/nest";
 import { PheromoneLayer } from "../world/pheromoneLayer";
+
+/** Phases of the game flow. */
+export type GamePhase = "placing_burrow" | "playing";
 
 export interface GameState {
   // Render targets
@@ -37,6 +41,10 @@ export interface GameState {
   playerAnt: Ant;
   allAnts: Ant[];
   foods: Food[];
+  nests: Nest[];
+
+  // Game phase
+  phase: GamePhase;
 
   // Respawn flow
   /** True from the moment the player dies until the new ant is spawned. */
@@ -68,42 +76,55 @@ export function createGameState(): GameState {
   const input = new InputHandler(canvas);
 
   // ---- Entities -----------------------------------------------------------
+  // Player starts as a queen near the LEFT edge (~10%)
+  const playerSpawnX = Math.round(worldWidth * 0.1);
+  const playerSpawnY = Math.round(worldHeight / 2);
   const playerAnt = new Ant(
     "black",
-    "soldier",
-    { x: worldWidth / 2 - 80, y: worldHeight / 2 - 120 },
+    "queen",
+    { x: playerSpawnX, y: playerSpawnY },
     true,
   );
   playerAnt.rank = 0;
 
-  // spawn some friendly ants for testing 2 black workers, 1 buffed red soldier, 2 red workers
-  const fellowBlackWorker = new Ant("black", "worker", {
-    x: worldWidth / 2 + 40,
-    y: worldHeight / 2 + 10,
-  });
-  const testNpc = new Ant("red", "worker", {
-    x: worldWidth / 2 - 60,
-    y: worldHeight / 2 - 50,
-  });
-  const buffedNpc = new Ant("red", "soldier", {
-    x: worldWidth / 2 - 100,
-    y: worldHeight / 2 + 80,
-  });
-  buffedNpc.attack += 4;
-  buffedNpc.defense += 4;
+  // ---- Red nest near the RIGHT edge (~90%) --------------------------------
+  const nests: Nest[] = [];
 
-  const allAnts: Ant[] = [playerAnt, fellowBlackWorker, testNpc, buffedNpc];
+  // Red nest near the RIGHT edge (~90%)
+  const redNestX = Math.round(worldWidth * 0.9);
+  const redNestY = Math.round(worldHeight / 2);
+  const redNest = new Nest("red", { x: redNestX, y: redNestY });
+  nests.push(redNest);
 
-  // ---- Food items scattered around the spawn area ------------------------
+  // ---- OpFor ants — 1 soldier + 3 workers near the red nest ---------------
+  const allAnts: Ant[] = [playerAnt];
+  allAnts.push(
+    new Ant("red", "soldier", {
+      x: redNest.pos.x + (Math.random() - 0.5) * 60,
+      y: redNest.pos.y + (Math.random() - 0.5) * 60,
+    }),
+  );
+  for (let i = 0; i < 3; i++) {
+    allAnts.push(
+      new Ant("red", "worker", {
+        x: redNest.pos.x + (Math.random() - 0.5) * 60,
+        y: redNest.pos.y + (Math.random() - 0.5) * 60,
+      }),
+    );
+  }
+
+  // ---- Food items scattered across the full world -------------------------
   const foodSpawns: Point[] = [
-    { x: worldWidth / 2 - 180, y: worldHeight / 2 - 140 },
-    { x: worldWidth / 2 + 200, y: worldHeight / 2 - 180 },
-    { x: worldWidth / 2 - 90, y: worldHeight / 2 + 190 },
-    { x: worldWidth / 2 + 260, y: worldHeight / 2 + 110 },
-    { x: worldWidth / 2 - 310, y: worldHeight / 2 + 40 },
-    { x: worldWidth / 2 + 60, y: worldHeight / 2 - 290 },
-    { x: worldWidth / 2 - 60, y: worldHeight / 2 + 340 },
-    { x: worldWidth / 2 + 340, y: worldHeight / 2 - 60 },
+    { x: worldWidth * 0.12, y: worldHeight * 0.3 },
+    { x: worldWidth * 0.2, y: worldHeight * 0.7 },
+    { x: worldWidth * 0.35, y: worldHeight * 0.2 },
+    { x: worldWidth * 0.35, y: worldHeight * 0.8 },
+    { x: worldWidth * 0.5, y: worldHeight * 0.5 },
+    { x: worldWidth * 0.65, y: worldHeight * 0.25 },
+    { x: worldWidth * 0.65, y: worldHeight * 0.75 },
+    { x: worldWidth * 0.8, y: worldHeight * 0.4 },
+    { x: worldWidth * 0.8, y: worldHeight * 0.6 },
+    { x: worldWidth * 0.92, y: worldHeight * 0.5 },
   ];
   const foods = foodSpawns.map((pos) => new Food(pos));
 
@@ -124,6 +145,8 @@ export function createGameState(): GameState {
     playerAnt,
     allAnts,
     foods,
+    nests,
+    phase: "placing_burrow",
     pendingRespawn: false,
     pheromoneLayer: new PheromoneLayer(),
     showFoodTrail: true,
@@ -150,7 +173,13 @@ export function resizeViewport(state: GameState): void {
  * Stats reset to base values; spawns at world centre; old ant removed from allAnts.
  */
 export function respawnPlayer(state: GameState, newRole: AntRole): void {
-  const spawnPos = { x: state.worldWidth / 2, y: state.worldHeight / 2 };
+  // Spawn at the player's nest if one exists, otherwise world centre
+  const playerNest = state.nests.find(
+    (n) => n.species === state.playerAnt.species,
+  );
+  const spawnPos = playerNest
+    ? { x: playerNest.pos.x, y: playerNest.pos.y - 20 }
+    : { x: state.worldWidth / 2, y: state.worldHeight / 2 };
   const newAnt = new Ant(state.playerAnt.species, newRole, spawnPos, true);
 
   // Swap old player ant for new one in the shared array
