@@ -29,8 +29,14 @@ export class Nest {
   drones = 0;
   queens = 0;
 
-  /** Cumulative food pieces delivered to this nest. */
+  /** Cumulative food pieces delivered to this nest (stat display only). */
   foodDelivered = 0;
+
+  /** Current food reserves available to spend on spawning. */
+  foodStored = 0;
+
+  /** Countdown (seconds) until the next spawn attempt. */
+  spawnTimer = 0;
 
   constructor(species: AntSpecies, pos: { x: number; y: number }) {
     this.species = species;

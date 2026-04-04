@@ -153,9 +153,15 @@ export function updateColonyPanels(nests: readonly Nest[]): void {
       if (el) el.textContent = String(val);
     };
     if (!nest) {
-      ["population", "workers", "soldiers", "drones", "queens", "food"].forEach(
-        (k) => set(k, "—"),
-      );
+      [
+        "population",
+        "workers",
+        "soldiers",
+        "drones",
+        "queens",
+        "food",
+        "foodStored",
+      ].forEach((k) => set(k, "—"));
       return;
     }
     set("population", nest.population);
@@ -163,6 +169,7 @@ export function updateColonyPanels(nests: readonly Nest[]): void {
     set("soldiers", nest.soldiers);
     set("drones", nest.drones);
     set("queens", nest.queens);
+    set("foodStored", nest.foodStored);
     set("food", nest.foodDelivered);
   });
 }

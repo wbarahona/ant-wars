@@ -16,6 +16,7 @@ import {
 } from "../prefabs/playerAntPrefab";
 import { DEPOSIT_INTERVAL } from "../world/pheromoneLayer";
 import { tickNpcAI } from "../ai/npcAI";
+import { tickColonyAI } from "../ai/colonyAI";
 
 const SCROLL_SPEED = 600; // px/s
 const EDGE_ZONE = 40; // px from canvas edge to trigger edge scroll
@@ -104,6 +105,7 @@ export function update(
           state.foods.splice(i, 1);
           carrier.target = null;
           homeNest.foodDelivered++;
+          homeNest.foodStored++;
           if (carrier.isPlayer) {
             const q = FOOD_DEPOSIT_QUIPS;
             carrier.setSpeechBubble(
@@ -180,6 +182,9 @@ export function update(
     state.worldHeight,
     dt,
   );
+
+  // ---- Colony spawn AI (grow population with delivered food) ----------------
+  tickColonyAI(state.nests, state.allAnts, dt);
 
   // Freeze ALL combatants for the duration of any active (unresolved) fight
   for (const rec of fights.records.values()) {
