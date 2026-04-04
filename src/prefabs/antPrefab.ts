@@ -1,5 +1,6 @@
 import type { Ant } from "../entities/ant";
 import type { AntRole } from "../types";
+import type { Palette } from "../entities/species";
 
 // ---- Pixel legend -----------------------------------------------------------
 //   0 = transparent
@@ -213,6 +214,48 @@ const ROLE_SCALE: Record<AntRole, number> = {
   drone: 2,
 };
 
+// ── Sprite cache ───────────────────────────────────────────────────────────────
+// Each (role, species, frame) combination is rendered once to an OffscreenCanvas
+// and cached.  drawAnt then issues a single drawImage() call instead of
+// rows×cols individual fillRect + state-change calls (96–140 per ant).
+const spriteCache = new Map<string, OffscreenCanvas>();
+
+function buildSprite(
+  role: AntRole,
+  species: string,
+  palette: Palette,
+  frameId: "A" | "B",
+): OffscreenCanvas {
+  const spec = ROLE_SPRITE[role];
+  const scale = ROLE_SCALE[role];
+  const frame = frameId === "A" ? spec.frameA : spec.frameB;
+  const oc = new OffscreenCanvas(spec.cols * scale, spec.rows * scale);
+  const octx = oc.getContext("2d")!;
+  for (let row = 0; row < spec.rows; row++) {
+    for (let col = 0; col < spec.cols; col++) {
+      const px = frame[row][col];
+      if (px === 0) continue;
+      octx.globalAlpha = px === 5 ? 0.55 : 1.0;
+      octx.fillStyle = palette[px as 1 | 2 | 3 | 4 | 5];
+      octx.fillRect(col * scale, row * scale, scale, scale);
+    }
+  }
+  octx.globalAlpha = 1.0;
+  const key = `${role}-${species}-${frameId}`;
+  spriteCache.set(key, oc);
+  return oc;
+}
+
+function getSprite(
+  role: AntRole,
+  species: string,
+  palette: Palette,
+  frameId: "A" | "B",
+): OffscreenCanvas {
+  const key = `${role}-${species}-${frameId}`;
+  return spriteCache.get(key) ?? buildSprite(role, species, palette, frameId);
+}
+
 // ---- Public API -------------------------------------------------------------
 
 /**
@@ -232,12 +275,16 @@ export function drawAnt(
   ant: Ant,
   indicator?: IndicatorFn,
 ): void {
-  const palette = ant.palette; // species-specific palette from Species base class
   const scale = ROLE_SCALE[ant.role];
   const spec = ROLE_SPRITE[ant.role];
-
   const drawX = Math.round(ant.pos.x - (spec.cols * scale) / 2);
   const drawY = Math.round(ant.pos.y - spec.anchor * scale);
+
+  // Pick animation frame
+  const frameId: "A" | "B" =
+    ant.state === "moving" && Math.floor(ant.walkPhase) % 2 === 0 ? "A" : "B";
+
+  const sprite = getSprite(ant.role, ant.species, ant.palette, frameId);
 
   ctx.save();
 
@@ -246,30 +293,13 @@ export function drawAnt(
   ctx.rotate(ant.facingAngle);
   ctx.translate(-ant.pos.x, -ant.pos.y);
 
-  // Dead ants: grayscale filter; alpha is handled per-pixel below
-  if (ant.state === "dead") ctx.filter = "grayscale(100%)";
-
-  const baseAlpha = ant.state === "dead" ? 0.35 : 1.0;
-
-  // Pick animation frame
-  const frame =
-    ant.state === "moving"
-      ? Math.floor(ant.walkPhase) % 2 === 0
-        ? spec.frameA
-        : spec.frameB
-      : spec.frameB; // idle
-
-  // Render pixels — wings (value 5) get reduced opacity
-  for (let row = 0; row < spec.rows; row++) {
-    for (let col = 0; col < spec.cols; col++) {
-      const pixel = frame[row][col];
-      if (pixel === 0) continue;
-      ctx.globalAlpha = pixel === 5 ? baseAlpha * 0.55 : baseAlpha;
-      ctx.fillStyle = palette[pixel as 1 | 2 | 3 | 4 | 5];
-      ctx.fillRect(drawX + col * scale, drawY + row * scale, scale, scale);
-    }
+  // Dead ants: desaturate + fade
+  if (ant.state === "dead") {
+    ctx.filter = "grayscale(100%)";
+    ctx.globalAlpha = 0.35;
   }
-  ctx.globalAlpha = 1.0;
+
+  ctx.drawImage(sprite, drawX, drawY);
 
   // Role decorators
   if (ant.role === "queen") drawCrown(ctx, ant.pos.x, drawY, scale);

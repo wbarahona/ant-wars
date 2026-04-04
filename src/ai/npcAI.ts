@@ -32,7 +32,7 @@ import { getColonyPhase } from "./colonyAI";
 const AI_TICK_INTERVAL = 1.5;
 
 /** World-px radius within which an ant can smell pheromones. */
-const PHEROMONE_SMELL_RADIUS = 180;
+const PHEROMONE_SMELL_RADIUS = 280;
 
 /** World-px radius within which a soldier/queen can see food directly. */
 const FOOD_SIGHT_RADIUS = 220;
@@ -57,13 +57,16 @@ const SOLDIER_ATTACK_BIAS = 0.8;
 const WORKER_FOOD_BIAS = 0.95;
 
 /** 0–1 probability that any ant follows a food trail as a fallback. */
-const GENERAL_FOOD_TRAIL_BIAS = 0.45;
+const GENERAL_FOOD_TRAIL_BIAS = 0.7;
 
 /** World-px radius within which drones patrol around their home nest. */
 const DRONE_LINGER_RADIUS = 160;
 
 /** Late-game probability that soldiers march directly on the enemy nest. */
 const LATE_ENEMY_NEST_BIAS = 0.75;
+
+/** World-px orbit radius for recruited squad members around the player ant. */
+const SQUAD_ORBIT_RADIUS = 200;
 
 /**
  * Half-angle of the directional cone used when an ant roams without a target.
@@ -135,6 +138,7 @@ export function tickNpcAI(
   worldWidth: number,
   worldHeight: number,
   dt: number,
+  playerAnt: Ant,
 ): void {
   for (const ant of allAnts) {
     if (ant.isPlayer || !ant.isAlive) continue;
@@ -149,6 +153,25 @@ export function tickNpcAI(
 
     // Reset the countdown (with slight randomness to prevent synchronised ticks)
     tickTimers.set(ant.id, AI_TICK_INTERVAL * (0.8 + Math.random() * 0.4));
+
+    // ── Recruited squad: orbit the player within SQUAD_ORBIT_RADIUS ─────────
+    if (ant.isRecruited) {
+      if (playerAnt.isAlive) {
+        const angle = Math.random() * Math.PI * 2;
+        const r = 40 + Math.random() * (SQUAD_ORBIT_RADIUS - 40);
+        ant.target = clampToWorld(
+          {
+            x: playerAnt.pos.x + Math.cos(angle) * r,
+            y: playerAnt.pos.y + Math.sin(angle) * r,
+          },
+          worldWidth,
+          worldHeight,
+        );
+      } else {
+        ant.target = null; // player dead — wait in place
+      }
+      continue;
+    }
 
     // Already has an active target → stay course
     if (ant.target !== null) continue;

@@ -20,6 +20,7 @@ import {
   hidePlayerContextMenu,
   type ContextMenuAction,
 } from "../prefabs/playerAntPrefab";
+import { recruitAnts, releaseSquad, countSquad } from "./squadManager";
 
 export function registerInputHandlers(
   state: GameState,
@@ -101,9 +102,15 @@ export function registerInputHandlers(
           });
           return;
         }
-        if (action === "recruit5") state.followerCount += 5;
-        if (action === "recruit10") state.followerCount += 10;
-        if (action === "release") state.followerCount = 0;
+        if (action === "recruit5") {
+          state.followerCount = recruitAnts(5, state.allAnts, state.playerAnt);
+        }
+        if (action === "recruit10") {
+          state.followerCount = recruitAnts(10, state.allAnts, state.playerAnt);
+        }
+        if (action === "release") {
+          state.followerCount = releaseSquad(state.allAnts);
+        }
         // "askFood" — no game state change yet
       },
     );
@@ -174,6 +181,8 @@ export function registerInputHandlers(
     if (clickedFriend) {
       state.flag = null;
       orderApproachFriend(state.playerAnt, clickedFriend.pos);
+      // Also tell the ally to walk toward the player so they meet each other
+      clickedFriend.target = { ...state.playerAnt.pos };
       return;
     }
 

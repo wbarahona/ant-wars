@@ -76,7 +76,7 @@ export class PheromoneLayer {
       if (p.type !== type || p.species !== playerSpecies) continue;
       ctx.globalAlpha = p.strength * 0.55;
       ctx.beginPath();
-      ctx.arc(p.pos.x, p.pos.y, 3, 0, Math.PI * 2);
+      ctx.arc(p.pos.x, p.pos.y, 5, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.globalAlpha = 1;

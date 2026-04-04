@@ -54,6 +54,12 @@ export class Ant extends Species {
   // Seconds remaining to emit attack trail after a fight (counts down after combat)
   postCombatTrailTime = 0;
 
+  /** gameTime (seconds) when this ant died; -1 while still alive. */
+  deadSince = -1;
+
+  /** True while this ally ant is part of the player's active squad. */
+  isRecruited = false;
+
   // Transient speech bubble — set via setSpeechBubble(), expires automatically
   speechBubbleText: string | null = null;
   private speechBubbleExpiry = 0;

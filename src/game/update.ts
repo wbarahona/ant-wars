@@ -17,11 +17,17 @@ import {
 import { DEPOSIT_INTERVAL } from "../world/pheromoneLayer";
 import { tickNpcAI } from "../ai/npcAI";
 import { tickColonyAI } from "../ai/colonyAI";
+import { countSquad } from "./squadManager";
 
 const SCROLL_SPEED = 600; // px/s
 const EDGE_ZONE = 40; // px from canvas edge to trigger edge scroll
 /** World-px from nest centre within which a carrying NPC deposits food. */
 const NEST_DELIVER_RADIUS = 32;
+/** Seconds a dead ant's corpse lingers before being removed from allAnts. */
+const CORPSE_LINGER = 15;
+
+/** Frame counter: colony census and squad-count run every 6 frames (~10 fps). */
+let censusTick = 0;
 
 export function update(
   state: GameState,
@@ -57,10 +63,30 @@ export function update(
   camera.move(dx, dy);
   state.gameTime += dt;
 
-  for (const ant of state.allAnts) ant.update(dt);
+  for (const ant of state.allAnts) {
+    ant.update(dt);
+    // Stamp newly-dead ants so the corpse pruner knows when they died
+    if (!ant.isAlive && ant.deadSince < 0) ant.deadSince = state.gameTime;
+  }
 
-  // ---- Colony stats (population census) ----------------------------------
-  for (const nest of state.nests) nest.updateStats(state.allAnts);
+  // ---- Prune old corpses (keeps allAnts from growing without bound) -------
+  for (let i = state.allAnts.length - 1; i >= 0; i--) {
+    const a = state.allAnts[i];
+    if (
+      !a.isPlayer &&
+      a.deadSince >= 0 &&
+      state.gameTime - a.deadSince >= CORPSE_LINGER
+    ) {
+      state.allAnts.splice(i, 1);
+    }
+  }
+
+  // ---- Colony stats census — throttled to ~10 fps (every 6 frames) --------
+  censusTick = (censusTick + 1) % 6;
+  if (censusTick === 0) {
+    for (const nest of state.nests) nest.updateStats(state.allAnts);
+    state.followerCount = countSquad(state.allAnts);
+  }
 
   // ---- Pheromone trail deposits -------------------------------------------
   state.pheromoneLayer.update(dt);
@@ -147,8 +173,8 @@ export function update(
     // Ground food — test against every alive ant not already carrying something
     for (const ant of state.allAnts) {
       if (!ant.isAlive) continue;
-      // One food per ant: skip if already carrying
-      if (state.foods.some((f) => f.carriedBy === ant)) continue;
+      // One food per ant: reuse the already-built foodCarriers Set (O(1) lookup)
+      if (foodCarriers.has(ant)) continue;
       if (
         circlesOverlap(
           { pos: ant.pos, collisionRadius: getContactRadius(ant) },
@@ -165,6 +191,7 @@ export function update(
           break;
         }
         food.pickup(ant);
+        foodCarriers.add(ant); // keep Set current to prevent double-pickup this frame
         break;
       }
     }
@@ -181,6 +208,7 @@ export function update(
     state.worldWidth,
     state.worldHeight,
     dt,
+    state.playerAnt,
   );
 
   // ---- Colony spawn AI (grow population with delivered food) ----------------
