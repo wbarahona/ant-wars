@@ -179,6 +179,56 @@
       <canvas id="game-canvas"></canvas>
     </div>
 
+    <!-- ── Notification banner ─────────────────────────────────────────────── -->
+    <style>
+      #notification-banner {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 40px;
+        z-index: 500;
+        justify-content: center;
+        align-items: center;
+        background: rgba(14, 14, 30, 0.92);
+        border-bottom: 2px solid #2a2a4a;
+        pointer-events: none;
+        user-select: none;
+      }
+
+      #notification-text {
+        font-family: "Courier New", monospace;
+        font-size: 15px;
+        font-weight: bold;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #e0e0ff;
+      }
+
+      /* Flash variant — used for high-priority alerts */
+      #notification-banner.flash {
+        background: rgba(40, 0, 0, 0.95);
+        border-bottom-color: #ef4444;
+      }
+      #notification-banner.flash #notification-text {
+        color: #ef4444;
+        animation: nb-flash 0.8s ease-in-out infinite alternate;
+      }
+
+      @keyframes nb-flash {
+        from {
+          opacity: 1;
+        }
+        to {
+          opacity: 0.35;
+        }
+      }
+    </style>
+    <div id="notification-banner">
+      <span id="notification-text"></span>
+    </div>
+
     <button id="hud-toggle" title="Toggle stats (Tab)">&#9776;</button>
 
     <div id="stats-panel">
@@ -298,7 +348,7 @@
         <button id="colony-tab-0" class="colony-tab-btn active">
           ⬥ MY COLONY
         </button>
-        <button id="colony-tab-1" class="colony-tab-btn">⬥ RED COLONY</button>
+        <button id="colony-tab-1" class="colony-tab-btn">⬥ OPFOR COLONY</button>
       </div>
 
       <!-- Panel 0: player colony -->

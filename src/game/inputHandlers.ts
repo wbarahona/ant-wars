@@ -66,6 +66,18 @@ export function registerInputHandlers(
       toggleStats();
     }
 
+    // ESC: close context menu
+    if (e.key === "Escape") {
+      hidePlayerContextMenu();
+    }
+
+    // P key: pause / resume (only during active gameplay)
+    if (e.key === "p" || e.key === "P") {
+      if (state.phase === "playing") {
+        state.paused = !state.paused;
+      }
+    }
+
     // Q key: snap camera to player ant and open context menu at cursor
     if (e.key === "q" || e.key === "Q") {
       if (!state.playerAnt.isAlive) return;
@@ -236,8 +248,9 @@ export function registerInputHandlers(
       return;
     }
 
-    // Check if a friendly ant was clicked — clear the flag, no order issued
+    // Check if a friendly ant was clicked — approach and replenish energy
     const FRIEND_HIT_RADIUS = 20;
+    const FRIEND_MAX_RANGE = 280; // only reachable friends within ~280 world px
     const clickedFriend = state.allAnts.find((a) => {
       if (a === state.playerAnt || !a.isAlive) return false;
       if (a.species !== state.playerAnt.species) return false;
@@ -247,10 +260,15 @@ export function registerInputHandlers(
     });
 
     if (clickedFriend) {
-      state.flag = null;
-      orderApproachFriend(state.playerAnt, clickedFriend.pos);
-      // Also tell the ally to walk toward the player so they meet each other
-      clickedFriend.target = { ...state.playerAnt.pos };
+      // Range-gate: only allow if the clicked ant is close enough to the player
+      const prx = clickedFriend.pos.x - state.playerAnt.pos.x;
+      const pry = clickedFriend.pos.y - state.playerAnt.pos.y;
+      if (prx * prx + pry * pry <= FRIEND_MAX_RANGE * FRIEND_MAX_RANGE) {
+        state.flag = null;
+        orderApproachFriend(state.playerAnt, clickedFriend.pos);
+        // Start tracking: ally will follow player position each tick
+        state.replenishTarget = clickedFriend;
+      }
       return;
     }
 

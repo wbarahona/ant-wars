@@ -21,6 +21,7 @@ type SpeciesInfo = {
   tagline: string;
   stats: { hp: number; speed: number; attack: number; defense: number };
   advantage: AntSpecies;
+  lore: string;
 };
 
 const SPECIES: Record<AntSpecies, SpeciesInfo> = {
@@ -31,6 +32,7 @@ const SPECIES: Record<AntSpecies, SpeciesInfo> = {
     tagline: "Balanced bruiser",
     stats: { hp: 185, speed: 50, attack: 28, defense: 16 },
     advantage: "yellow",
+    lore: "Eciton burchellii — forms raiding columns of 200,000+ workers. Has no permanent nest; the colony itself is the home.",
   },
   red: {
     label: "Fire Ant",
@@ -39,6 +41,7 @@ const SPECIES: Record<AntSpecies, SpeciesInfo> = {
     tagline: "Glass cannon",
     stats: { hp: 100, speed: 72, attack: 38, defense: 6 },
     advantage: "green",
+    lore: "Solenopsis invicta — injects alkaloid venom that causes a burning sting. Workers can form living rafts on water using their own bodies.",
   },
   green: {
     label: "Leaf-cutter",
@@ -47,6 +50,7 @@ const SPECIES: Record<AntSpecies, SpeciesInfo> = {
     tagline: "Fortress",
     stats: { hp: 220, speed: 50, attack: 20, defense: 25 },
     advantage: "black",
+    lore: "Atta cephalotes — grows fungus gardens underground as its sole food source. Soldier mandibles are so strong they can cut through human skin.",
   },
   yellow: {
     label: "Carpenter Ant",
@@ -55,6 +59,7 @@ const SPECIES: Record<AntSpecies, SpeciesInfo> = {
     tagline: "Swift scout",
     stats: { hp: 140, speed: 75, attack: 27, defense: 13 },
     advantage: "red",
+    lore: "Camponotus ligniperda — excavates wood with no wood-eating, leaving sawdust trails. Can live up to 6 years, one of the longest-lived ants.",
   },
 };
 
@@ -322,6 +327,24 @@ function makeSpeciesCard(
   );
   adv.textContent = `▲ beats ${SPECIES[info.advantage].label}`;
   card.appendChild(adv);
+
+  // Lore blurb
+  const loreEl = el(
+    "div",
+    {},
+    {
+      fontFamily: "'Courier New', monospace",
+      fontSize: "9px",
+      color: "#6a6a8a",
+      textAlign: "left",
+      lineHeight: "1.5",
+      marginTop: "6px",
+      borderTop: "1px solid rgba(255,255,255,0.06)",
+      paddingTop: "6px",
+    },
+  );
+  loreEl.textContent = info.lore;
+  card.appendChild(loreEl);
 
   if (!isDisabled) {
     card.addEventListener("mouseenter", () => {

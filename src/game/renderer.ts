@@ -12,6 +12,7 @@ import { drawMinimap, defaultMinimapConfig } from "../ui/minimap";
 import { drawPlayerAnt } from "../prefabs/playerAntPrefab";
 import { drawAnt } from "../prefabs/antPrefab";
 import { updatePlayerStats, updateColonyPanels } from "../ui/statsPanel";
+import { updateNotificationBanner } from "../ui/notificationBanner";
 import { drawFightCloud, drawFightResolution } from "../gfx/fightCloud";
 import { drawFood } from "../prefabs/foodPrefab";
 import { drawAnthill } from "../prefabs/anthillPrefab";
@@ -181,4 +182,21 @@ export function render(state: GameState, fights: FightManager): void {
   // ---- HUD: right-side stats panel ----------------------------------------
   updatePlayerStats(playerAnt);
   updateColonyPanels(state.nests, state.playerSpecies, state.foeSpecies);
+  updateNotificationBanner(state, fights);
+
+  // ---- Pause overlay -------------------------------------------------------
+  if (state.paused) {
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,0.45)";
+    ctx.fillRect(0, 0, vw, vh);
+    ctx.font = "bold 48px 'Courier New', monospace";
+    ctx.fillStyle = "#f4d03f";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("⏸  PAUSED", vw / 2, vh / 2);
+    ctx.font = "14px 'Courier New', monospace";
+    ctx.fillStyle = "#7a7aaa";
+    ctx.fillText("Press P to resume", vw / 2, vh / 2 + 52);
+    ctx.restore();
+  }
 }

@@ -9,8 +9,8 @@ import type { Nest } from "../entities/nest";
 import type { GameResult } from "../game/gameState";
 
 const COLONY_LABELS: Record<string, string> = {
-  black: "⬥ BLACK COLONY (YOUR NEST)",
-  red: "⬥ RED COLONY (OPFOR)",
+  black: "⬥ YOUR NEST",
+  red: "⬥ OPFOR COLONY",
 };
 
 const RESULT_SUBTITLES: Record<GameResult, string> = {

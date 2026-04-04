@@ -67,6 +67,12 @@ export interface GameState {
 
   /** Number of food items when the world was last fully seeded (used for refill threshold). */
   foodInitialCount: number;
+
+  /** True while the game is paused (P key). Only pausable during "playing" phase. */
+  paused: boolean;
+
+  /** Ally the player is walking toward for energy replenishment. Cleared after contact. */
+  replenishTarget: Ant | null;
 }
 
 export function createGameState(
@@ -175,6 +181,8 @@ export function createGameState(
     playerSpecies,
     foeSpecies,
     foodInitialCount: foods.length,
+    paused: false,
+    replenishTarget: null,
   };
 }
 

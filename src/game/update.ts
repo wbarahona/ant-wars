@@ -37,6 +37,8 @@ export function update(
 ): void {
   // Game over — stop ticking
   if (state.phase === "game_over") return;
+  // Paused — skip all simulation
+  if (state.paused) return;
   let dx = 0;
   let dy = 0;
 
@@ -216,6 +218,26 @@ export function update(
 
   // ---- Colony spawn AI (grow population with delivered food) ----------------
   tickColonyAI(state.nests, state.allAnts, dt);
+
+  // ---- replenishTarget tracking: keep ally walking toward player pos -------
+  if (state.replenishTarget !== null) {
+    const ally = state.replenishTarget;
+    if (!ally.isAlive || !state.playerAnt.isAlive) {
+      state.replenishTarget = null;
+    } else {
+      // Always refresh ally target to player's current pos
+      ally.target = { ...state.playerAnt.pos };
+      // Check contact (12 px threshold to trigger replenish)
+      const rdx = ally.pos.x - state.playerAnt.pos.x;
+      const rdy = ally.pos.y - state.playerAnt.pos.y;
+      if (rdx * rdx + rdy * rdy <= 12 * 12) {
+        // Replenish happens via fightManager when they physically overlap;
+        // force it here regardless of distance already handled above
+        ally.target = null; // stop tracking — return to autonomy
+        state.replenishTarget = null;
+      }
+    }
+  }
 
   // ---- Food refill: replenish when overworld drops below 20% of initial ----
   if (
