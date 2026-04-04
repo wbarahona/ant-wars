@@ -1,4 +1,5 @@
 import type { Ant } from "../entities/ant";
+import type { Nest } from "../entities/nest";
 import { RANKS } from "../types";
 import { drawRankInsignia } from "../prefabs/playerAntPrefab";
 
@@ -115,4 +116,53 @@ export function updatePlayerStats(ant: Ant): void {
   if (atkEl) atkEl.textContent = String(ant.attack);
   const defEl = sel("stat-ant-defense");
   if (defEl) defEl.textContent = String(ant.defense);
+}
+
+// ── Colony panels (tabbed) ───────────────────────────────────────────────────
+
+// Two fixed panels: 0 = player colony (black), 1 = opfor (red).
+// Keyed by species so array order in state.nests doesn't matter.
+const PANEL_SPECIES = ["black", "red"] as const;
+
+let tabsInitialised = false;
+function initColonyTabs(): void {
+  if (tabsInitialised) return;
+  tabsInitialised = true;
+  for (let i = 0; i < 2; i++) {
+    const btn = document.getElementById(`colony-tab-${i}`);
+    if (!btn) continue;
+    btn.addEventListener("click", () => {
+      for (let j = 0; j < 2; j++) {
+        document
+          .getElementById(`colony-tab-${j}`)
+          ?.classList.toggle("active", j === i);
+        const panel = document.getElementById(`colony-panel-${j}`);
+        if (panel) panel.style.display = j === i ? "block" : "none";
+      }
+    });
+  }
+}
+
+export function updateColonyPanels(nests: readonly Nest[]): void {
+  initColonyTabs();
+
+  PANEL_SPECIES.forEach((species, i) => {
+    const nest = nests.find((n) => n.species === species);
+    const set = (suffix: string, val: string | number) => {
+      const el = document.getElementById(`colony-${i}-${suffix}`);
+      if (el) el.textContent = String(val);
+    };
+    if (!nest) {
+      ["population", "workers", "soldiers", "drones", "queens", "food"].forEach(
+        (k) => set(k, "—"),
+      );
+      return;
+    }
+    set("population", nest.population);
+    set("workers", nest.workers);
+    set("soldiers", nest.soldiers);
+    set("drones", nest.drones);
+    set("queens", nest.queens);
+    set("food", nest.foodDelivered);
+  });
 }

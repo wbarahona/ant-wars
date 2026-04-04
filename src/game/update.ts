@@ -58,6 +58,9 @@ export function update(
 
   for (const ant of state.allAnts) ant.update(dt);
 
+  // ---- Colony stats (population census) ----------------------------------
+  for (const nest of state.nests) nest.updateStats(state.allAnts);
+
   // ---- Pheromone trail deposits -------------------------------------------
   state.pheromoneLayer.update(dt);
   const foodCarriers = new Set(
@@ -100,6 +103,7 @@ export function update(
           food.drop();
           state.foods.splice(i, 1);
           carrier.target = null;
+          homeNest.foodDelivered++;
           if (carrier.isPlayer) {
             const q = FOOD_DEPOSIT_QUIPS;
             carrier.setSpeechBubble(

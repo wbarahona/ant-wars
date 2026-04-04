@@ -248,36 +248,112 @@
         </div>
       </div>
 
-      <div class="stat-section">
-        <h3>Colony</h3>
-        <div class="stat-row">
-          <span>Name</span><span id="stat-name">—</span>
+      <!-- ── Colony tabs ──────────────────────────────────────────────── -->
+      <style>
+        .colony-tabs {
+          display: flex;
+          border-bottom: 2px solid #2a2a4a;
+        }
+        .colony-tab-btn {
+          flex: 1;
+          background: #0f0f1e;
+          border: none;
+          border-right: 1px solid #2a2a4a;
+          color: #7a7aaa;
+          font-family: "Courier New", monospace;
+          font-size: 10px;
+          letter-spacing: 1px;
+          text-transform: uppercase;
+          padding: 8px 4px;
+          cursor: pointer;
+          transition:
+            background 0.15s,
+            color 0.15s;
+        }
+        .colony-tab-btn:last-child {
+          border-right: none;
+        }
+        .colony-tab-btn:hover {
+          background: #1a1a2e;
+          color: #d0d0d0;
+        }
+        .colony-tab-btn.active {
+          background: #14142a;
+          color: #f4d03f;
+          border-bottom: 2px solid #f4d03f;
+        }
+        .colony-panel {
+          padding: 10px 12px;
+        }
+        .colony-panel .stat-section {
+          padding: 6px 0;
+          border-bottom: 1px solid #2a2a4a;
+        }
+        .colony-panel .stat-section:last-child {
+          border-bottom: none;
+        }
+      </style>
+
+      <div class="colony-tabs">
+        <button id="colony-tab-0" class="colony-tab-btn active">
+          ⬥ MY COLONY
+        </button>
+        <button id="colony-tab-1" class="colony-tab-btn">⬥ RED COLONY</button>
+      </div>
+
+      <!-- Panel 0: player colony -->
+      <div id="colony-panel-0" class="colony-panel">
+        <div class="stat-section">
+          <h3>Population</h3>
+          <div class="stat-row">
+            <span>Total</span><span id="colony-0-population">0</span>
+          </div>
+          <div class="stat-row">
+            <span>Queens</span><span id="colony-0-queens">0</span>
+          </div>
+          <div class="stat-row">
+            <span>Soldiers</span><span id="colony-0-soldiers">0</span>
+          </div>
+          <div class="stat-row">
+            <span>Workers</span><span id="colony-0-workers">0</span>
+          </div>
+          <div class="stat-row">
+            <span>Drones</span><span id="colony-0-drones">0</span>
+          </div>
         </div>
-        <div class="stat-row">
-          <span>Species</span><span id="stat-species">—</span>
+        <div class="stat-section">
+          <h3>Resources</h3>
+          <div class="stat-row">
+            <span>Food foraged</span><span id="colony-0-food">0</span>
+          </div>
         </div>
       </div>
 
-      <div class="stat-section">
-        <h3>Population</h3>
-        <div class="stat-row">
-          <span>Total</span><span id="stat-population">0</span>
+      <!-- Panel 1: opfor colony (hidden by default) -->
+      <div id="colony-panel-1" class="colony-panel" style="display: none">
+        <div class="stat-section">
+          <h3>Population</h3>
+          <div class="stat-row">
+            <span>Total</span><span id="colony-1-population">0</span>
+          </div>
+          <div class="stat-row">
+            <span>Queens</span><span id="colony-1-queens">0</span>
+          </div>
+          <div class="stat-row">
+            <span>Soldiers</span><span id="colony-1-soldiers">0</span>
+          </div>
+          <div class="stat-row">
+            <span>Workers</span><span id="colony-1-workers">0</span>
+          </div>
+          <div class="stat-row">
+            <span>Drones</span><span id="colony-1-drones">0</span>
+          </div>
         </div>
-        <div class="stat-row">
-          <span>Workers</span><span id="stat-workers">0</span>
-        </div>
-        <div class="stat-row">
-          <span>Soldiers</span><span id="stat-soldiers">0</span>
-        </div>
-        <div class="stat-row">
-          <span>Drones</span><span id="stat-drones">0</span>
-        </div>
-      </div>
-
-      <div class="stat-section">
-        <h3>Resources</h3>
-        <div class="stat-row">
-          <span>Food</span><span id="stat-food">0</span>
+        <div class="stat-section">
+          <h3>Resources</h3>
+          <div class="stat-row">
+            <span>Food foraged</span><span id="colony-1-food">0</span>
+          </div>
         </div>
       </div>
 

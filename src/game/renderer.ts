@@ -11,7 +11,7 @@ import { drawOverworld, drawFlag } from "../world/overworld";
 import { drawMinimap, defaultMinimapConfig } from "../ui/minimap";
 import { drawPlayerAnt } from "../prefabs/playerAntPrefab";
 import { drawAnt } from "../prefabs/antPrefab";
-import { updatePlayerStats } from "../ui/statsPanel";
+import { updatePlayerStats, updateColonyPanels } from "../ui/statsPanel";
 import { drawFightCloud, drawFightResolution } from "../gfx/fightCloud";
 import { drawFood } from "../prefabs/foodPrefab";
 import { drawAnthill } from "../prefabs/anthillPrefab";
@@ -164,4 +164,5 @@ export function render(state: GameState, fights: FightManager): void {
 
   // ---- HUD: right-side stats panel ----------------------------------------
   updatePlayerStats(playerAnt);
+  updateColonyPanels(state.nests);
 }

@@ -89,7 +89,7 @@ export function registerInputHandlers(
       state.phase,
       (action: ContextMenuAction) => {
         if (action === "burrowHere") {
-          // Place the player's nest at the queen's current position
+          // Create and register the player's nest at the queen's position
           const playerNest = new Nest(state.playerAnt.species, {
             x: state.playerAnt.pos.x,
             y: state.playerAnt.pos.y,

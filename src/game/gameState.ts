@@ -87,14 +87,14 @@ export function createGameState(): GameState {
   );
   playerAnt.rank = 0;
 
-  // ---- Red nest near the RIGHT edge (~90%) --------------------------------
-  const nests: Nest[] = [];
-
-  // Red nest near the RIGHT edge (~90%)
+  // ---- Nests ---------------------------------------------------------------
+  // Red nest near the RIGHT edge (~90%).
+  // The player's black nest is NOT pre-created here — it is added to this
+  // array only when the player places the burrow during placing_burrow phase.
   const redNestX = Math.round(worldWidth * 0.9);
   const redNestY = Math.round(worldHeight / 2);
   const redNest = new Nest("red", { x: redNestX, y: redNestY });
-  nests.push(redNest);
+  const nests: Nest[] = [redNest];
 
   // ---- OpFor ants — 1 soldier + 3 workers near the red nest ---------------
   const allAnts: Ant[] = [playerAnt];
