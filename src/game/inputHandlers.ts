@@ -10,6 +10,7 @@ import { resizeViewport, respawnPlayer } from "./gameState";
 import type { FightManager } from "./fightManager";
 import { Nest } from "../entities/nest";
 import { showBurrowDialog } from "./burrowDialog";
+import { ANTHILL_HALF_W, ANTHILL_HEIGHT } from "../prefabs/anthillPrefab";
 import {
   orderMarch,
   orderCharge,
@@ -190,7 +191,23 @@ export function registerInputHandlers(
       return;
     }
 
-    // Terrain click — place flag and march
+    // Check if a nest/burrow was clicked — clear any waypoint and do nothing else
+    const clickedNest = state.nests.find((nest) => {
+      const dx = worldClickX - nest.pos.x;
+      const dy = worldClickY - nest.pos.y;
+      return Math.abs(dx) <= ANTHILL_HALF_W && dy >= -ANTHILL_HEIGHT && dy <= 0;
+    });
+
+    if (clickedNest) {
+      // March to the nest silently — no flag marker shown
+      state.flag = null;
+      orderMarch(
+        state.playerAnt,
+        { x: clickedNest.pos.x, y: clickedNest.pos.y },
+        state.followerCount,
+      );
+      return;
+    }
     state.flag = { x: worldClickX, y: worldClickY };
     orderMarch(state.playerAnt, state.flag, state.followerCount);
   });

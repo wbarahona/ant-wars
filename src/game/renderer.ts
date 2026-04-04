@@ -116,6 +116,10 @@ export function render(state: GameState, fights: FightManager): void {
 
   const dots: MinimapDot[] = [];
   if (flag) dots.push({ wx: flag.x, wy: flag.y, color: "#e63946" });
+  // Nests — drawn first (below ants) as larger landmarks
+  for (const nest of state.nests) {
+    dots.push({ wx: nest.pos.x, wy: nest.pos.y, color: nest.color, size: 5 });
+  }
   // Food items — small lime dots
   for (const food of foods) {
     if (!food.isCarried)

@@ -10,12 +10,17 @@ import type { FightManager } from "./fightManager";
 import { showRespawnDialog } from "./respawnDialog";
 import { circlesOverlap } from "../collision";
 import { getContactRadius } from "../combat";
-import { FOOD_QUIPS_HUNGRY } from "../prefabs/playerAntPrefab";
+import {
+  FOOD_QUIPS_HUNGRY,
+  FOOD_DEPOSIT_QUIPS,
+} from "../prefabs/playerAntPrefab";
 import { DEPOSIT_INTERVAL } from "../world/pheromoneLayer";
 import { tickNpcAI } from "../ai/npcAI";
 
 const SCROLL_SPEED = 600; // px/s
 const EDGE_ZONE = 40; // px from canvas edge to trigger edge scroll
+/** World-px from nest centre within which a carrying NPC deposits food. */
+const NEST_DELIVER_RADIUS = 32;
 
 export function update(
   state: GameState,
@@ -81,6 +86,32 @@ export function update(
   for (let i = state.foods.length - 1; i >= 0; i--) {
     const food = state.foods[i];
 
+    // Any ant (player or NPC) delivers food when close enough to their nest
+    if (food.isCarried && food.carriedBy) {
+      const carrier = food.carriedBy;
+      const homeNest = state.nests.find((n) => n.species === carrier.species);
+      if (homeNest) {
+        const ndx = carrier.pos.x - homeNest.pos.x;
+        const ndy = carrier.pos.y - homeNest.pos.y;
+        if (
+          ndx * ndx + ndy * ndy <=
+          NEST_DELIVER_RADIUS * NEST_DELIVER_RADIUS
+        ) {
+          food.drop();
+          state.foods.splice(i, 1);
+          carrier.target = null;
+          if (carrier.isPlayer) {
+            const q = FOOD_DEPOSIT_QUIPS;
+            carrier.setSpeechBubble(
+              q[Math.floor(Math.random() * q.length)],
+              2500,
+            );
+          }
+          continue;
+        }
+      }
+    }
+
     // Drop food if the carrier just died
     if (food.isCarried && food.carriedBy && !food.carriedBy.isAlive) {
       food.drop();
@@ -139,6 +170,7 @@ export function update(
   tickNpcAI(
     state.allAnts,
     state.foods,
+    state.nests,
     state.pheromoneLayer,
     state.worldWidth,
     state.worldHeight,

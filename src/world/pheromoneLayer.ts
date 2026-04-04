@@ -141,8 +141,9 @@ export class PheromoneLayer {
 
   /**
    * Gradient climbing: find the STRONGEST (freshest) pheromone within radius.
-   * Freshest particles were deposited most recently — closest to the source
-   * (food item or combat site). Following them steers the ant toward the goal.
+   * Food trails: strongest = near nest (deposited last on return trip).
+   * Attack trails: strongest = near the combat/enemy site.
+   * Use this when you want an ant to head TOWARD the nest or the fight.
    */
   queryStrongest(
     pos: Point,
@@ -159,6 +160,38 @@ export class PheromoneLayer {
       const dy = p.pos.y - pos.y;
       if (dx * dx + dy * dy > r2) continue;
       if (p.strength > bestStrength) {
+        bestStrength = p.strength;
+        best = p;
+      }
+    }
+    return best;
+  }
+
+  /**
+   * Gradient descent: find the WEAKEST (oldest) pheromone within radius that
+   * still has meaningful strength (above minStrength).
+   *
+   * Food trails are deposited by returning ants (food → nest direction):
+   *   weakest end = near the food source.
+   * Following the weakest signal steers an empty forager TOWARD the food.
+   */
+  queryWeakest(
+    pos: Point,
+    type: PheromoneType,
+    species: AntSpecies,
+    radius: number,
+    minStrength = 0.08,
+  ): Pheromone | null {
+    let best: Pheromone | null = null;
+    let bestStrength = Infinity;
+    const r2 = radius * radius;
+    for (const p of this.pheromones) {
+      if (p.type !== type || p.species !== species) continue;
+      if (p.strength < minStrength) continue;
+      const dx = p.pos.x - pos.x;
+      const dy = p.pos.y - pos.y;
+      if (dx * dx + dy * dy > r2) continue;
+      if (p.strength < bestStrength) {
         bestStrength = p.strength;
         best = p;
       }

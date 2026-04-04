@@ -2,6 +2,8 @@ export interface MinimapDot {
   wx: number; // world-space x
   wy: number; // world-space y
   color: string;
+  /** Dot size in screen pixels (default 2) */
+  size?: number;
 }
 
 export interface MinimapConfig {
@@ -118,13 +120,14 @@ export function drawMinimap(
   for (const dot of cfg.dots) {
     const px = Math.round(x + dot.wx * scaleX);
     const py = Math.round(y + dot.wy * scaleY);
-    // Clamp to minimap area (use 2-px size in clamp so edge dots are visible)
-    if (px < x || px + 2 > x + width || py < y || py + 2 > y + height) continue;
-    // Dark 1-px outline so the dot pops against any background
+    const s = dot.size ?? 2;
+    // Clamp to minimap area so edge dots are visible
+    if (px < x || px + s > x + width || py < y || py + s > y + height) continue;
+    // Dark outline so the dot pops against any background
     ctx.fillStyle = "rgba(0,0,0,0.6)";
-    ctx.fillRect(px - 1, py - 1, 4, 4);
+    ctx.fillRect(px - 1, py - 1, s + 2, s + 2);
     ctx.fillStyle = dot.color;
-    ctx.fillRect(px, py, 2, 2);
+    ctx.fillRect(px, py, s, s);
   }
 
   ctx.restore();

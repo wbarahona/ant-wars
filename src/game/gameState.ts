@@ -113,20 +113,18 @@ export function createGameState(): GameState {
     );
   }
 
-  // ---- Food items scattered across the full world -------------------------
-  const foodSpawns: Point[] = [
-    { x: worldWidth * 0.12, y: worldHeight * 0.3 },
-    { x: worldWidth * 0.2, y: worldHeight * 0.7 },
-    { x: worldWidth * 0.35, y: worldHeight * 0.2 },
-    { x: worldWidth * 0.35, y: worldHeight * 0.8 },
-    { x: worldWidth * 0.5, y: worldHeight * 0.5 },
-    { x: worldWidth * 0.65, y: worldHeight * 0.25 },
-    { x: worldWidth * 0.65, y: worldHeight * 0.75 },
-    { x: worldWidth * 0.8, y: worldHeight * 0.4 },
-    { x: worldWidth * 0.8, y: worldHeight * 0.6 },
-    { x: worldWidth * 0.92, y: worldHeight * 0.5 },
-  ];
-  const foods = foodSpawns.map((pos) => new Food(pos));
+  // ---- Food clumps ---------------------------------------------------------
+  // Clumps are placed near each nest and at semi-random mid-world anchors.
+  // Within each clump, items follow a sqrt(random) radial distribution which
+  // gives uniform area density — items are denser at the centre and thin out
+  // naturally toward the edges, mimicking real foraging patches.
+  const foods = spawnFoodClumps(
+    worldWidth,
+    worldHeight,
+    playerSpawnX,
+    playerSpawnY,
+    nests,
+  );
 
   camera.centerOn(playerAnt.pos.x, playerAnt.pos.y);
 
@@ -192,4 +190,88 @@ export function respawnPlayer(state: GameState, newRole: AntRole): void {
   state.followerCount = 0;
   state.pendingRespawn = false;
   state.camera.centerOn(spawnPos.x, spawnPos.y);
+}
+
+// ── Food clump generator ───────────────────────────────────────────────────────
+/**
+ * Spawns food in natural-looking clumps.
+ *
+ * Distribution: each item is placed at angle = uniform random,
+ * distance = clumpRadius * sqrt(random).  The sqrt pull gives uniform
+ * area density — items are denser at the centre and thin out toward the
+ * edge, matching how real resource patches look.
+ *
+ * Clump anchors:
+ *   • One patch near the player starting position
+ *   • One patch near each nest
+ *   • Several mid-world patches at spread-out grid-jittered positions
+ */
+function spawnFoodClumps(
+  worldWidth: number,
+  worldHeight: number,
+  playerX: number,
+  playerY: number,
+  nests: Nest[],
+): Food[] {
+  const MARGIN = 30;
+
+  interface Clump {
+    cx: number;
+    cy: number;
+    count: number;
+    radius: number;
+  }
+
+  const clumps: Clump[] = [];
+
+  // Near the player starting area — small forage patch
+  clumps.push({ cx: playerX + 120, cy: playerY, count: 5, radius: 90 });
+
+  // Near each nest
+  for (const nest of nests) {
+    clumps.push({
+      cx: nest.pos.x - 140,
+      cy: nest.pos.y,
+      count: 6,
+      radius: 110,
+    });
+  }
+
+  // Mid-world clumps on a loose 3×3 grid with per-cell jitter
+  const cols = 3;
+  const rows = 3;
+  for (let col = 0; col < cols; col++) {
+    for (let row = 0; row < rows; row++) {
+      // Base position in normalised space (0.2…0.8 range keeps away from edges)
+      const nx = 0.2 + (col / (cols - 1)) * 0.6;
+      const ny = 0.2 + (row / (rows - 1)) * 0.6;
+      // Jitter up to ±8% of world size so clumps don't sit on a perfect grid
+      const jx = (Math.random() - 0.5) * worldWidth * 0.16;
+      const jy = (Math.random() - 0.5) * worldHeight * 0.16;
+      clumps.push({
+        cx: worldWidth * nx + jx,
+        cy: worldHeight * ny + jy,
+        count: 4 + Math.floor(Math.random() * 3), // 4–6 items per clump
+        radius: 80 + Math.random() * 60, // 80–140 px radius
+      });
+    }
+  }
+
+  const foods: Food[] = [];
+  for (const c of clumps) {
+    for (let i = 0; i < c.count; i++) {
+      const r = c.radius * Math.sqrt(Math.random()); // uniform area density
+      const angle = Math.random() * Math.PI * 2;
+      const x = Math.max(
+        MARGIN,
+        Math.min(worldWidth - MARGIN, c.cx + Math.cos(angle) * r),
+      );
+      const y = Math.max(
+        MARGIN,
+        Math.min(worldHeight - MARGIN, c.cy + Math.sin(angle) * r),
+      );
+      foods.push(new Food({ x, y }));
+    }
+  }
+  return foods;
 }
